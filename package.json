@@ -1,0 +1,13 @@
+{
+  "name": "payment-gateway-clone",
+  "version": "1.0.0",
+  "description": "Production-grade payment gateway inspired by Juspay/Razorpay",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "seed": "cd backend && node seed.js",
+    "start:backend": "cd backend && npm start",
+    "build:frontend": "cd frontend && npm run build"
+  }
+}
