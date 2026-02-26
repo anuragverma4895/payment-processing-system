@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL, // ✅ fixed for production
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -45,9 +45,13 @@ export const orderAPI = {
 // Payments
 export const paymentAPI = {
   initiate: (data, idempotencyKey) =>
-    api.post('/payments', data, { headers: { 'Idempotency-Key': idempotencyKey } }),
+    api.post('/payments', data, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    }),
   retry: (data, idempotencyKey) =>
-    api.post('/payments/retry', data, { headers: { 'Idempotency-Key': idempotencyKey } }),
+    api.post('/payments/retry', data, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    }),
   getMyPayments: (params) => api.get('/payments/my', { params }),
   getById: (paymentId) => api.get(`/payments/${paymentId}`),
   adminGetAll: (params) => api.get('/payments/admin/all', { params }),
