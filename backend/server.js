@@ -33,11 +33,15 @@ connectDB();
 
 // ─── Security Middleware ──────────────────────────────────────────────────────
 app.use(helmet());
+
+// ✅ FIXED CORS (PRODUCTION + LOCAL BOTH)
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://payment-processing-system-theta.vercel.app'
+  ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key'],
 }));
 
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
@@ -71,6 +75,10 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 }));
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.send('🚀 Payment Gateway API is running');
+});
+
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
@@ -91,7 +99,7 @@ app.all('*', (req, res) => {
 // ─── Global Error Handler ─────────────────────────────────────────────────────
 app.use(errorHandler);
 
-// ─── Unhandled Rejection / Uncaught Exception ─────────────────────────────────
+// ─── Crash Handling ───────────────────────────────────────────────────────────
 process.on('unhandledRejection', (err) => {
   logger.error('UNHANDLED REJECTION:', err);
   process.exit(1);
@@ -102,17 +110,17 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
+// ─── Start Server ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
+
 const server = app.listen(PORT, () => {
-  logger.info(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-  logger.info(`📚 API Docs available at http://localhost:${PORT}/api/docs`);
+  logger.info(`🚀 Server running on port ${PORT}`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  logger.info('SIGTERM received. Shutting down gracefully...');
+  logger.info('SIGTERM received. Shutting down...');
   server.close(() => {
-    logger.info('Process terminated.');
     process.exit(0);
   });
 });
