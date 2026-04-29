@@ -1,17 +1,27 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { orderAPI, paymentAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const generateIdempotencyKey = () =>
-  `idem_${Date.now()}_${Math.random().toString(36).substring(2, 18)}`;
+  `idem_${Date.now()}_${Math.random().toString(36).slice(2, 18)}`;
 
-const maskCard = (num) => {
-  const cleaned = num.replace(/\s/g, '').replace(/\D/g, '');
-  if (cleaned.length === 0) return '**** **** **** ****';
-  const padded = cleaned.padEnd(16, '*');
-  return `${padded.slice(0,4)} ${padded.slice(4,8)} ${padded.slice(8,12)} ${padded.slice(12,16)}`;
+const maskCard = (value) => {
+  const digits = value.replace(/\D/g, '');
+  if (!digits) return '**** **** **** ****';
+  const padded = digits.padEnd(16, '*');
+  return `${padded.slice(0, 4)} ${padded.slice(4, 8)} ${padded.slice(8, 12)} ${padded.slice(12, 16)}`;
 };
+
+const formatCurrency = (amount, currency = 'INR') =>
+  new Intl.NumberFormat('en-IN', { style: 'currency', currency }).format(amount);
+
+const PAYMENT_METHODS = [
+  { id: 'card', label: 'Card', note: 'Fast and familiar for checkout flows' },
+  { id: 'upi', label: 'UPI', note: 'Popular low-friction instant payment method' },
+  { id: 'netbanking', label: 'Net banking', note: 'Simulated bank redirect support' },
+  { id: 'wallet', label: 'Wallet', note: 'Stored-value wallet simulation' },
+];
 
 export default function PaymentPage() {
   const { orderId } = useParams();
@@ -21,136 +31,120 @@ export default function PaymentPage() {
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState(null);
   const [method, setMethod] = useState('card');
-  const [idempotencyKey] = useState(generateIdempotencyKey);
-
+  const [idempotencyKey, setIdempotencyKey] = useState(generateIdempotencyKey());
+  const [error, setError] = useState('');
   const [cardForm, setCardForm] = useState({ number: '', expiryMonth: '', expiryYear: '', cvv: '', name: '' });
   const [upiForm, setUpiForm] = useState({ vpa: '' });
-  const [error, setError] = useState('');
 
   useEffect(() => {
     orderAPI.getById(orderId)
       .then(({ data }) => setOrder(data.data.order))
-      .catch(() => { toast.error('Order not found'); navigate('/orders'); })
+      .catch(() => {
+        toast.error('Order not found');
+        navigate('/orders');
+      })
       .finally(() => setLoading(false));
-  }, [orderId]);
+  }, [navigate, orderId]);
 
-  const formatCardNumber = (val) => {
-    return val.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+  const methodSummary = useMemo(
+    () => PAYMENT_METHODS.find((entry) => entry.id === method),
+    [method]
+  );
+
+  const trustPoints = [
+    'JWT protected user session',
+    'Idempotency key generated per attempt',
+    'Sensitive card data not stored in plain text',
+    'Retry flow supported for failed orders',
+  ];
+
+  const handleCardNumberChange = (event) => {
+    const formatted = event.target.value.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+    setCardForm((current) => ({ ...current, number: formatted }));
   };
 
-  const handleCardNumberChange = (e) => {
-    setCardForm({ ...cardForm, number: formatCardNumber(e.target.value) });
+  const getPayload = () => {
+    const payload = { orderId, method };
+    if (method === 'card') {
+      payload.cardDetails = {
+        number: cardForm.number.replace(/\s/g, ''),
+        expiryMonth: cardForm.expiryMonth,
+        expiryYear: cardForm.expiryYear,
+        cvv: cardForm.cvv,
+      };
+    }
+    if (method === 'upi') {
+      payload.upiDetails = { vpa: upiForm.vpa };
+    }
+    return payload;
   };
 
-  const handlePay = async () => {
+  const handlePay = async (isRetry = false) => {
     setError('');
     setProcessing(true);
 
     try {
-      const payload = { orderId, method };
-      if (method === 'card') {
-        payload.cardDetails = {
-          number: cardForm.number.replace(/\s/g, ''),
-          expiryMonth: cardForm.expiryMonth,
-          expiryYear: cardForm.expiryYear,
-          cvv: cardForm.cvv,
-        };
-      } else if (method === 'upi') {
-        payload.upiDetails = { vpa: upiForm.vpa };
-      }
-
-      const { data } = await paymentAPI.initiate(payload, idempotencyKey);
+      const payload = getPayload();
+      const requestKey = isRetry ? generateIdempotencyKey() : idempotencyKey;
+      if (isRetry) setIdempotencyKey(requestKey);
+      const { data } = isRetry
+        ? await paymentAPI.retry(payload, requestKey)
+        : await paymentAPI.initiate(payload, requestKey);
       setResult(data);
       if (data.success) {
-        toast.success('Payment successful! 🎉');
+        toast.success(isRetry ? 'Retry successful' : 'Payment successful');
       } else {
-        toast.error('Payment failed');
+        toast.error(isRetry ? 'Retry failed' : 'Payment failed');
       }
     } catch (err) {
-      const msg = err.response?.data?.message || 'Payment processing failed';
-      setError(msg);
-      toast.error(msg);
+      const message = err.response?.data?.message || (isRetry ? 'Retry failed' : 'Payment failed');
+      setError(message);
+      toast.error(message);
     } finally {
       setProcessing(false);
     }
   };
 
-  const handleRetry = async () => {
-    const newKey = generateIdempotencyKey();
-    setError('');
-    setResult(null);
-    setProcessing(true);
-    try {
-      const payload = { orderId, method };
-      if (method === 'card') {
-        payload.cardDetails = {
-          number: cardForm.number.replace(/\s/g, ''),
-          expiryMonth: cardForm.expiryMonth,
-          expiryYear: cardForm.expiryYear,
-          cvv: cardForm.cvv,
-        };
-      } else if (method === 'upi') {
-        payload.upiDetails = { vpa: upiForm.vpa };
-      }
-      const { data } = await paymentAPI.retry(payload, newKey);
-      setResult(data);
-      if (data.success) toast.success('Retry successful! 🎉');
-      else toast.error('Retry failed');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Retry failed');
-    } finally {
-      setProcessing(false);
-    }
-  };
+  if (loading) {
+    return <div className="loading-inline"><div className="spinner" /></div>;
+  }
 
-  const formatCurrency = (amount, currency = 'INR') =>
-    new Intl.NumberFormat('en-IN', { style: 'currency', currency }).format(amount);
-
-  if (loading) return <div className="loading-inline"><div className="spinner" /></div>;
   if (!order) return null;
 
   if (result) {
     return (
-      <div className="page-body" style={{ maxWidth: 480, margin: '60px auto' }}>
-        <div className="card animate-up" style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 56, marginBottom: 16 }}>
-            {result.success ? '✅' : '❌'}
+      <div className="page-body">
+        <div className="card result-card animate-up" style={{ textAlign: 'center' }}>
+          <div className="logo-mark small" style={{ margin: '0 auto 18px', fontSize: '0.82rem' }}>
+            {result.success ? 'OK' : 'NO'}
           </div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
+          <div className="section-title" style={{ fontSize: '1.8rem' }}>
             {result.success ? 'Payment Successful' : 'Payment Failed'}
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
+          </div>
+          <div className="section-subtitle" style={{ maxWidth: 360, margin: '10px auto 22px' }}>
             {result.success
-              ? `${formatCurrency(result.data.payment.amount, result.data.payment.currency)} processed successfully`
-              : result.data?.payment?.failureReason || 'Transaction was declined'}
-          </p>
+              ? `${formatCurrency(result.data.payment.amount, result.data.payment.currency)} processed successfully.`
+              : result.data?.payment?.failureReason || 'The gateway declined this transaction.'}
+          </div>
 
-          {result.data?.payment && (
-            <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius)', padding: 16, marginBottom: 24, textAlign: 'left' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '1px' }}>Transaction Details</div>
-              {[
-                ['Payment ID', result.data.payment.paymentId],
-                ['Order ID', result.data.order?.orderId],
-                ['Amount', formatCurrency(result.data.payment.amount, result.data.payment.currency)],
-                ['Method', result.data.payment.method],
-                ['Status', result.data.payment.status],
-              ].map(([label, value]) => (
-                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{label}</span>
-                  <span className="mono" style={{ fontSize: 12 }}>{value}</span>
-                </div>
-              ))}
+          <div className="soft-card" style={{ textAlign: 'left', marginBottom: 18 }}>
+            <div className="section-title" style={{ fontSize: '1rem', marginBottom: 14 }}>Transaction Summary</div>
+            <div className="mini-metrics">
+              <div className="mini-metric"><span>Payment ID</span><strong>{result.data.payment.paymentId}</strong></div>
+              <div className="mini-metric"><span>Order ID</span><strong>{result.data.order?.orderId}</strong></div>
+              <div className="mini-metric"><span>Method</span><strong>{result.data.payment.method}</strong></div>
+              <div className="mini-metric"><span>Status</span><strong>{result.data.payment.status}</strong></div>
             </div>
-          )}
+          </div>
 
-          <div style={{ display: 'flex', gap: 12 }}>
-            {!result.success && (result.data?.order?.remainingAttempts > 0) && (
-              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={handleRetry} disabled={processing}>
-                {processing ? 'Retrying...' : `↻ Retry (${result.data.order.remainingAttempts} left)`}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {!result.success && result.data?.order?.remainingAttempts > 0 && (
+              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => handlePay(true)} disabled={processing}>
+                {processing ? 'Retrying...' : `Retry (${result.data.order.remainingAttempts} left)`}
               </button>
             )}
             <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => navigate('/orders')}>
-              {result.success ? '→ View Orders' : 'Back to Orders'}
+              Open orders
             </button>
           </div>
         </div>
@@ -163,162 +157,216 @@ export default function PaymentPage() {
       {processing && (
         <div className="processing-overlay">
           <div className="processing-card">
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
               <div className="spinner" style={{ width: 40, height: 40, borderWidth: 3 }} />
             </div>
-            <div className="processing-title">Processing Payment</div>
-            <div className="processing-sub">Please wait while we securely process your payment...</div>
-            <div style={{ marginTop: 16, fontSize: 12, color: 'var(--text-muted)' }}>Do not close this window</div>
+            <div className="processing-title">Processing payment</div>
+            <div className="processing-sub">Secure gateway simulation is validating method, deduping the request, and recording the transaction.</div>
           </div>
         </div>
       )}
 
       <div className="page-header">
         <div className="page-title">Checkout</div>
-        <div className="page-subtitle">Complete your payment securely</div>
+        <div className="page-subtitle">3D payment experience with trust signals, live card preview, and method guidance.</div>
       </div>
 
-      <div className="page-body" style={{ maxWidth: 560 }}>
-        {error && <div className="alert alert-error">⚠ {error}</div>}
+      <div className="page-body">
+        {error && <div className="alert alert-error">! {error}</div>}
 
-        {/* Order Summary */}
-        <div className="card card-sm" style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Order</div>
-            <div className="mono" style={{ marginTop: 2 }}>{order.orderId}</div>
-            {order.description && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>{order.description}</div>}
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 24, fontWeight: 700 }}>{formatCurrency(order.amount, order.currency)}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Attempt {order.attempts + 1} of {order.maxAttempts}</div>
-          </div>
-        </div>
+        <div className="grid grid-2">
+          <section className="card hover-lift">
+            <div className="split-header">
+              <div>
+                <div className="section-title">Order Snapshot</div>
+                <div className="section-subtitle">Everything important before processing the payment</div>
+              </div>
+              <span className="badge badge-pending">Attempt {order.attempts + 1} / {order.maxAttempts}</span>
+            </div>
 
-        <div className="card">
-          {/* Method Tabs */}
-          <div className="payment-tabs">
-            {[['card', '💳 Card'], ['upi', '⚡ UPI'], ['netbanking', '🏦 Net Banking'], ['wallet', '👝 Wallet']].map(([m, label]) => (
-              <button key={m} className={`payment-tab ${method === m ? 'active' : ''}`} onClick={() => setMethod(m)}>
-                {label}
-              </button>
-            ))}
-          </div>
+            <div className="hero-card" style={{ marginBottom: 20 }}>
+              <span className="eyebrow">Current order</span>
+              <h2 style={{ fontSize: '2.4rem', marginTop: 16 }}>{formatCurrency(order.amount, order.currency)}</h2>
+              <p>{order.description || 'No order description provided for this transaction.'}</p>
+              <div className="mini-metrics" style={{ marginTop: 20 }}>
+                <div className="mini-metric"><span>Order ID</span><strong>{order.orderId}</strong></div>
+                <div className="mini-metric"><span>Status</span><strong>{order.status}</strong></div>
+                <div className="mini-metric"><span>Request key</span><strong>{idempotencyKey.slice(-12)}</strong></div>
+              </div>
+            </div>
 
-          {/* Card Form */}
-          {method === 'card' && (
-            <>
-              <div className="card-display">
-                <div className="card-chip" />
-                <div className="card-number-display">
-                  {maskCard(cardForm.number.replace(/\s/g, ''))}
+            <div className="card-display">
+              <div className="card-chip" />
+              <div className="card-number-display">{maskCard(cardForm.number)}</div>
+              <div className="card-footer">
+                <div>
+                  <div className="card-label">Card holder</div>
+                  <div className="card-value">{cardForm.name || 'YOUR NAME'}</div>
                 </div>
-                <div className="card-footer">
-                  <div>
-                    <div className="card-label">Card Holder</div>
-                    <div className="card-value">{cardForm.name || 'YOUR NAME'}</div>
+                <div>
+                  <div className="card-label">Expires</div>
+                  <div className="card-value">{cardForm.expiryMonth || 'MM'}/{cardForm.expiryYear?.slice(-2) || 'YY'}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="soft-card">
+              <div className="section-title" style={{ fontSize: '1rem', marginBottom: 12 }}>Why this flow feels stronger now</div>
+              <div className="trust-list">
+                {trustPoints.map((point) => (
+                  <div key={point} className="trust-item">
+                    <span className="tiny-dot" />
+                    <span>{point}</span>
                   </div>
-                  <div>
-                    <div className="card-label">Expires</div>
-                    <div className="card-value">
-                      {(cardForm.expiryMonth || 'MM')}/{(cardForm.expiryYear?.slice(-2) || 'YY')}
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
+            </div>
+          </section>
 
-              <div className="form-group">
-                <label className="form-label">Card Number</label>
-                <input
-                  className="form-input"
-                  style={{ fontFamily: 'var(--font-mono)', letterSpacing: '2px' }}
-                  placeholder="0000 0000 0000 0000"
-                  value={cardForm.number}
-                  onChange={handleCardNumberChange}
-                  maxLength={19}
-                />
+          <section className="card hover-lift">
+            <div className="section-title">Payment Method</div>
+            <div className="section-subtitle">Select a method and complete the secure checkout</div>
+
+            <div className="payment-tabs" style={{ marginTop: 20 }}>
+              {PAYMENT_METHODS.map((entry) => (
+                <button
+                  key={entry.id}
+                  className={`payment-tab ${method === entry.id ? 'active' : ''}`}
+                  onClick={() => setMethod(entry.id)}
+                >
+                  {entry.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="soft-card" style={{ marginBottom: 18 }}>
+              <div className="mini-metric">
+                <span>Selected method</span>
+                <strong>{methodSummary?.label}</strong>
               </div>
-              <div className="form-group">
-                <label className="form-label">Cardholder Name</label>
-                <input
-                  className="form-input"
-                  placeholder="As printed on card"
-                  value={cardForm.name}
-                  onChange={(e) => setCardForm({ ...cardForm, name: e.target.value })}
-                />
-              </div>
-              <div className="form-row-3">
+              <div className="section-subtitle" style={{ marginTop: 10 }}>{methodSummary?.note}</div>
+            </div>
+
+            {method === 'card' && (
+              <>
                 <div className="form-group">
-                  <label className="form-label">Month</label>
-                  <select className="form-select" value={cardForm.expiryMonth} onChange={(e) => setCardForm({ ...cardForm, expiryMonth: e.target.value })}>
-                    <option value="">MM</option>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                      <option key={m} value={String(m).padStart(2, '0')}>{String(m).padStart(2, '0')}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Year</label>
-                  <select className="form-select" value={cardForm.expiryYear} onChange={(e) => setCardForm({ ...cardForm, expiryYear: e.target.value })}>
-                    <option value="">YY</option>
-                    {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(y => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">CVV</label>
+                  <label className="form-label">Card Number</label>
                   <input
-                    className="form-input"
-                    type="password"
-                    placeholder="•••"
-                    maxLength={4}
-                    value={cardForm.cvv}
-                    onChange={(e) => setCardForm({ ...cardForm, cvv: e.target.value.replace(/\D/g, '') })}
+                    className="form-input mono"
+                    placeholder="0000 0000 0000 0000"
+                    value={cardForm.number}
+                    maxLength={19}
+                    onChange={handleCardNumberChange}
                   />
                 </div>
-              </div>
-            </>
-          )}
+                <div className="form-group">
+                  <label className="form-label">Cardholder Name</label>
+                  <input
+                    className="form-input"
+                    placeholder="Name on card"
+                    value={cardForm.name}
+                    onChange={(event) => setCardForm((current) => ({ ...current, name: event.target.value }))}
+                  />
+                </div>
+                <div className="form-row-3">
+                  <div className="form-group">
+                    <label className="form-label">Month</label>
+                    <select
+                      className="form-select"
+                      value={cardForm.expiryMonth}
+                      onChange={(event) => setCardForm((current) => ({ ...current, expiryMonth: event.target.value }))}
+                    >
+                      <option value="">MM</option>
+                      {Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, '0')).map((month) => (
+                        <option key={month} value={month}>{month}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Year</label>
+                    <select
+                      className="form-select"
+                      value={cardForm.expiryYear}
+                      onChange={(event) => setCardForm((current) => ({ ...current, expiryYear: event.target.value }))}
+                    >
+                      <option value="">YYYY</option>
+                      {Array.from({ length: 10 }, (_, index) => String(new Date().getFullYear() + index)).map((year) => (
+                        <option key={year} value={year}>{year}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">CVV</label>
+                    <input
+                      className="form-input"
+                      type="password"
+                      placeholder="123"
+                      value={cardForm.cvv}
+                      maxLength={4}
+                      onChange={(event) => setCardForm((current) => ({ ...current, cvv: event.target.value.replace(/\D/g, '') }))}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
 
-          {/* UPI Form */}
-          {method === 'upi' && (
-            <div className="form-group">
-              <label className="form-label">UPI ID (VPA)</label>
-              <input
-                className="form-input"
-                placeholder="yourname@upi"
-                value={upiForm.vpa}
-                onChange={(e) => setUpiForm({ vpa: e.target.value })}
-              />
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
-                Examples: user@paytm, 9876543210@upi, name@oksbi
+            {method === 'upi' && (
+              <div className="form-group">
+                <label className="form-label">UPI ID</label>
+                <input
+                  className="form-input"
+                  placeholder="name@upi"
+                  value={upiForm.vpa}
+                  onChange={(event) => setUpiForm({ vpa: event.target.value })}
+                />
+                <div className="inline-note">Examples: user@paytm, mobile@ibl, business@oksbi</div>
+              </div>
+            )}
+
+            {(method === 'netbanking' || method === 'wallet') && (
+              <div className="soft-card" style={{ marginBottom: 18 }}>
+                <div className="section-title" style={{ fontSize: '1rem' }}>Simulation Ready</div>
+                <div className="section-subtitle" style={{ marginTop: 8 }}>
+                  This method uses the existing backend simulator, so no extra customer input is required.
+                </div>
+              </div>
+            )}
+
+            <div className="soft-card" style={{ marginBottom: 18 }}>
+              <div className="section-title" style={{ fontSize: '1rem', marginBottom: 14 }}>Processing Timeline</div>
+              <div className="timeline-list">
+                <div className="timeline-item">
+                  <div className="timeline-mark">01</div>
+                  <div>
+                    <strong>Validate payload</strong>
+                    <p>Input and method-specific fields are validated before the request hits payment logic.</p>
+                  </div>
+                </div>
+                <div className="timeline-item">
+                  <div className="timeline-mark">02</div>
+                  <div>
+                    <strong>Check idempotency</strong>
+                    <p>Duplicate requests with the same key are blocked or replayed safely.</p>
+                  </div>
+                </div>
+                <div className="timeline-item">
+                  <div className="timeline-mark">03</div>
+                  <div>
+                    <strong>Store payment outcome</strong>
+                    <p>Payment record, order status update, and transaction logging complete the flow.</p>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
 
-          {/* Other methods */}
-          {(method === 'netbanking' || method === 'wallet') && (
-            <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-secondary)' }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>{method === 'netbanking' ? '🏦' : '👝'}</div>
-              <div>Simulated {method === 'netbanking' ? 'Net Banking' : 'Wallet'} payment</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>No additional input required for simulation</div>
-            </div>
-          )}
-
-          <button
-            className="btn btn-primary btn-block btn-lg"
-            onClick={handlePay}
-            disabled={processing || order.status === 'paid'}
-            style={{ marginTop: 8 }}
-          >
-            {processing
-              ? <><div className="spinner" style={{ width: 16, height: 16 }} /> Processing...</>
-              : `🔒 Pay ${formatCurrency(order.amount, order.currency)}`}
-          </button>
-
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', marginTop: 12 }}>
-            🔒 256-bit SSL encryption · Idempotency protected
-          </div>
+            <button
+              className="btn btn-primary btn-block btn-lg"
+              onClick={() => handlePay(false)}
+              disabled={processing || order.status === 'paid'}
+            >
+              {processing ? <><div className="spinner" style={{ width: 16, height: 16 }} /> Processing...</> : `Pay ${formatCurrency(order.amount, order.currency)}`}
+            </button>
+          </section>
         </div>
       </div>
     </>

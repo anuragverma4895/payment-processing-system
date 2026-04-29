@@ -1,19 +1,17 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL, // ✅ fixed for production
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor - attach JWT
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// Response interceptor - handle auth errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -26,7 +24,6 @@ api.interceptors.response.use(
   }
 );
 
-// Auth
 export const authAPI = {
   signup: (data) => api.post('/auth/signup', data),
   login: (data) => api.post('/auth/login', data),
@@ -34,7 +31,6 @@ export const authAPI = {
   getMe: () => api.get('/auth/me'),
 };
 
-// Orders
 export const orderAPI = {
   create: (data) => api.post('/orders', data),
   getAll: (params) => api.get('/orders', { params }),
@@ -42,7 +38,6 @@ export const orderAPI = {
   adminGetAll: (params) => api.get('/orders/admin/all', { params }),
 };
 
-// Payments
 export const paymentAPI = {
   initiate: (data, idempotencyKey) =>
     api.post('/payments', data, {
@@ -58,7 +53,6 @@ export const paymentAPI = {
   getDashboardStats: () => api.get('/payments/admin/dashboard'),
 };
 
-// Transactions
 export const transactionAPI = {
   getMyLogs: (params) => api.get('/transactions/my', { params }),
   adminGetLogs: (params) => api.get('/transactions', { params }),
