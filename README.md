@@ -1,287 +1,310 @@
-# 💳 PayGateway — Production-Grade Payment System
+# PayGateway
 
-A full-stack payment gateway inspired by Juspay/Razorpay, built with Node.js, Express, React, and MongoDB.
+Production-style payment processing system inspired by Razorpay and Juspay.  
+Built with `Node.js`, `Express`, `React`, `Vite`, and `MongoDB`.
 
----
+## Overview
 
-## 🏗️ Architecture Overview
+This project simulates a modern payment gateway where users can:
 
-```
-payment-gateway-clone/
-├── backend/
-│   ├── config/           # DB, logger, swagger config
-│   ├── controllers/      # Route handlers (auth, order, payment, webhook)
-│   ├── middlewares/      # Auth, validation, rate-limit, idempotency
-│   ├── models/           # Mongoose schemas (User, Order, Payment, Log, IdempotencyKey)
-│   ├── routes/           # Express routers
-│   ├── services/         # Business logic (paymentEngine, webhookService, logger)
-│   ├── utils/            # AppError, JWT, crypto helpers
-│   ├── seed.js           # Database seeder
-│   └── server.js         # Entry point
-└── frontend/
-    └── src/
-        ├── components/   # Layout component
-        ├── context/      # AuthContext
-        ├── pages/        # Login, Signup, Dashboard, Orders, Payment, Admin
-        └── services/     # Axios API client
-```
+- sign up and log in
+- create payment orders
+- pay using card, UPI, net banking, or wallet simulation
+- retry failed payments
+- view transaction history
+- access admin analytics and logs
 
----
+It goes beyond a normal CRUD app by covering real payment-system concepts like:
 
-## 🚀 Tech Stack
+- idempotency
+- retry handling
+- transaction logging
+- webhook simulation
+- rate limiting
+- secure card masking and hashing
+
+## What's New In This Version
+
+- redesigned frontend with a more attractive 3D-style dashboard
+- richer hover effects and layered visual cards
+- improved checkout experience with trust/timeline sections
+- better order insights, search, and retry visibility
+- admin dashboard polished for demos and interviews
+- interview guide generated in `docs/` and kept out of Git using `.gitignore`
+
+## Tech Stack
 
 | Layer | Tech |
-|-------|------|
-| Backend | Node.js + Express.js |
-| Frontend | React 18 + Vite |
-| Database | MongoDB + Mongoose |
-| Auth | JWT (RS/HS256) |
-| API Docs | Swagger/OpenAPI |
-| Logging | Winston |
-| Security | Helmet, CORS, Rate Limiting |
+|---|---|
+| Frontend | React 18, Vite, React Router, Axios |
+| Backend | Node.js, Express |
+| Database | MongoDB, Mongoose |
+| Auth | JWT |
+| Security | Helmet, CORS, rate limiting, validators |
+| Docs | Swagger / OpenAPI |
+| Logging | Winston, custom transaction logs |
 
----
+## Project Structure
 
-## ✨ Features
+```text
+payment-processing-system/
+|-- backend/
+|   |-- config/
+|   |-- controllers/
+|   |-- middlewares/
+|   |-- models/
+|   |-- routes/
+|   |-- services/
+|   |-- utils/
+|   |-- .env.example
+|   |-- seed.js
+|   `-- server.js
+|-- frontend/
+|   |-- src/
+|   |   |-- components/
+|   |   |-- context/
+|   |   |-- pages/
+|   |   `-- services/
+|   |-- index.html
+|   `-- vite.config.js
+|-- docs/
+|-- package.json
+`-- README.md
+```
 
-- **JWT Authentication** — Signup/login with role-based access (user/admin)
-- **Order Management** — Create orders with unique IDs, expiry, and status tracking
-- **Payment Processing** — Mock card & UPI with realistic delays (500ms–3s) and 85% success rate
-- **Idempotency** — Prevents duplicate payments using header-based keys with TTL
-- **Retry System** — Up to 3 configurable retry attempts per order
-- **Transaction Logs** — Immutable audit trail for every event
-- **Webhook Simulation** — Async delivery with HMAC-SHA256 signature verification
-- **Admin Dashboard** — Real-time stats, all payments, full transaction logs
-- **Security** — Card masking, SHA-256 hashing, input validation, rate limiting
+## Key Features
 
----
+### User Features
 
-## ⚙️ Setup Instructions
+- JWT-based signup and login
+- protected dashboard and routes
+- order creation with amount, currency, description, and metadata
+- payment checkout with multiple simulated methods
+- retry for failed payments within max attempt limit
+- transaction history page
+
+### Payment Features
+
+- idempotency key required on payment operations
+- mock payment engine with configurable delay and success rate
+- card details masked and hashed
+- UPI VPA support
+- webhook simulation after payment result
+- separate payment and order lifecycle tracking
+
+### Admin Features
+
+- overall payment stats
+- revenue view
+- payment method breakdown
+- recent payments table
+- transaction/event logs
+
+## Backend Flow
+
+1. User authenticates and receives JWT.
+2. User creates an order.
+3. Frontend sends payment request with `Idempotency-Key`.
+4. Backend validates payload and checks idempotency.
+5. Payment service processes payment through mock engine.
+6. Payment and order statuses are updated.
+7. Transaction logs are stored.
+8. Webhook dispatch is simulated asynchronously.
+
+## Order vs Payment
+
+- `Order` means payment intent.
+- `Payment` means an actual transaction attempt.
+
+One order can have multiple payment attempts because retries are supported.
+
+## Security Highlights
+
+- JWT auth
+- role-based admin protection
+- Helmet security headers
+- route-level rate limiting
+- request validation with `express-validator`
+- SHA-256 card hashing
+- masked card storage
+- CVV is never stored
+- idempotency protection for duplicate payment requests
+
+## API Summary
+
+Swagger UI:
+
+```text
+http://localhost:5000/api/docs
+```
+
+### Auth
+
+- `POST /api/auth/signup`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+- `POST /api/auth/logout`
+
+### Orders
+
+- `POST /api/orders`
+- `GET /api/orders`
+- `GET /api/orders/:orderId`
+- `GET /api/orders/admin/all`
+
+### Payments
+
+- `POST /api/payments`
+- `POST /api/payments/retry`
+- `GET /api/payments/my`
+- `GET /api/payments/:paymentId`
+- `GET /api/payments/admin/all`
+- `GET /api/payments/admin/dashboard`
+
+### Transactions
+
+- `GET /api/transactions/my`
+- `GET /api/transactions`
+
+## Local Setup
 
 ### Prerequisites
-- Node.js v18+
-- MongoDB (local or Atlas)
-- npm or yarn
 
-### 1. Clone & Install
+- Node.js 18+
+- MongoDB local or Atlas
+- npm
+
+### 1. Install dependencies
+
+From project root:
 
 ```bash
-git clone <repo-url>
-cd payment-gateway-clone
+npm run install:all
+```
 
-# Backend
+Or manually:
+
+```bash
 cd backend
 npm install
 
-# Frontend
 cd ../frontend
 npm install
 ```
 
-### 2. Configure Environment
+### 2. Configure environment
+
+Copy:
 
 ```bash
 cd backend
 cp .env.example .env
 ```
 
-Edit `.env` with your values:
+Add values in `backend/.env`:
 
 ```env
 NODE_ENV=development
 PORT=5000
 MONGO_URI=mongodb://localhost:27017/payment_gateway
 JWT_SECRET=your_super_secret_jwt_key_change_in_production
+JWT_EXPIRES_IN=7d
 ENCRYPTION_KEY=your_32_char_encryption_key_here!!
 WEBHOOK_SECRET=your_webhook_secret_key
+WEBHOOK_URL=http://localhost:5000/api/webhooks/payment
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX=100
 PAYMENT_SUCCESS_RATE=0.85
+PAYMENT_MIN_DELAY_MS=500
+PAYMENT_MAX_DELAY_MS=3000
 ```
 
-### 3. Seed Database (Optional)
+### 3. Seed demo users
 
 ```bash
-cd backend
-node seed.js
+npm run seed
 ```
 
-This creates:
+Demo credentials:
+
 - Admin: `admin@paygateway.io` / `Admin@1234`
 - User: `user@paygateway.io` / `User@1234`
 
-### 4. Start Development Servers
-
-**Backend (port 5000):**
-```bash
-cd backend
-npm run dev
-```
-
-**Frontend (port 3000):**
-```bash
-cd frontend
-npm run dev
-```
-
-Open: http://localhost:3000
-
----
-
-## 📡 API Reference
-
-Swagger UI: **http://localhost:5000/api/docs**
-
-### Authentication
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/signup` | Register new user |
-| POST | `/api/auth/login` | Login and get JWT |
-| GET | `/api/auth/me` | Get current user |
-| POST | `/api/auth/logout` | Logout |
-
-### Orders
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/orders` | Create order |
-| GET | `/api/orders` | Get my orders |
-| GET | `/api/orders/:orderId` | Get single order |
-| GET | `/api/orders/admin/all` | [Admin] All orders |
-
-### Payments
-
-| Method | Endpoint | Auth Header | Description |
-|--------|----------|-------------|-------------|
-| POST | `/api/payments` | `Idempotency-Key: <key>` | Initiate payment |
-| POST | `/api/payments/retry` | `Idempotency-Key: <key>` | Retry failed payment |
-| GET | `/api/payments/my` | — | My payments |
-| GET | `/api/payments/:id` | — | Get payment by ID |
-| GET | `/api/payments/admin/all` | — | [Admin] All payments |
-| GET | `/api/payments/admin/dashboard` | — | [Admin] Dashboard stats |
-
-### Transaction Logs
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/transactions/my` | My transaction logs |
-| GET | `/api/transactions` | [Admin] All logs |
-
----
-
-## 🧪 API Testing Steps
-
-### Step 1: Register & Login
-```bash
-# Signup
-curl -X POST http://localhost:5000/api/auth/signup \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test User","email":"test@test.com","password":"Test@1234"}'
-
-# Login
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@test.com","password":"Test@1234"}'
-```
-
-Copy the `token` from the response.
-
-### Step 2: Create an Order
-```bash
-curl -X POST http://localhost:5000/api/orders \
-  -H "Authorization: Bearer <TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d '{"amount":999,"currency":"INR","description":"Test order"}'
-```
-
-Copy the `orderId` from the response.
-
-### Step 3: Initiate Payment (Card)
-```bash
-curl -X POST http://localhost:5000/api/payments \
-  -H "Authorization: Bearer <TOKEN>" \
-  -H "Content-Type: application/json" \
-  -H "Idempotency-Key: unique_key_$(date +%s)" \
-  -d '{
-    "orderId": "<ORDER_ID>",
-    "method": "card",
-    "cardDetails": {
-      "number": "4111111111111111",
-      "expiryMonth": "12",
-      "expiryYear": "2028",
-      "cvv": "123"
-    }
-  }'
-```
-
-### Step 4: Initiate Payment (UPI)
-```bash
-curl -X POST http://localhost:5000/api/payments \
-  -H "Authorization: Bearer <TOKEN>" \
-  -H "Content-Type: application/json" \
-  -H "Idempotency-Key: upi_$(date +%s)" \
-  -d '{"orderId":"<ORDER_ID>","method":"upi","upiDetails":{"vpa":"test@upi"}}'
-```
-
-### Step 5: Test Idempotency (Same key, same request)
-```bash
-# Second call with same Idempotency-Key returns cached response
-curl -X POST http://localhost:5000/api/payments \
-  -H "Idempotency-Key: same_key_as_before" \
-  ...
-```
-
-### Step 6: Admin Dashboard
-```bash
-# Login as admin first, then:
-curl -X GET http://localhost:5000/api/payments/admin/dashboard \
-  -H "Authorization: Bearer <ADMIN_TOKEN>"
-```
-
----
-
-## 🔐 Security Notes
-
-- **Cards**: Number is hashed with SHA-256, only last 4 digits stored as masked. CVV is NEVER persisted.
-- **JWT**: Signed with HS256, checks password change timestamp
-- **Rate Limiting**: 100 req/15min global, 10 auth attempts/15min, 5 payments/min
-- **Helmet**: Sets 14 security headers
-- **Input Validation**: express-validator on all endpoints
-- **Idempotency TTL**: 24-hour MongoDB TTL index auto-expires keys
-
----
-
-## 🎛️ Configuration
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PAYMENT_SUCCESS_RATE` | 0.85 | Probability of payment success (0–1) |
-| `PAYMENT_MIN_DELAY_MS` | 500 | Min processing delay |
-| `PAYMENT_MAX_DELAY_MS` | 3000 | Max processing delay |
-| `RATE_LIMIT_MAX` | 100 | Requests per window |
-| `JWT_EXPIRES_IN` | 7d | Token expiry |
-
----
-
-## 📦 Production Deployment
+### 4. Run backend
 
 ```bash
-# Backend
-NODE_ENV=production npm start
-
-# Frontend
-npm run build
-# Serve dist/ with nginx or a CDN
+npm run dev:backend
 ```
 
-For production, also:
-1. Use MongoDB Atlas with SSL
-2. Set strong `JWT_SECRET` (64+ chars)
-3. Configure CORS to your exact domain
-4. Enable MongoDB Atlas IP whitelist
-5. Use a process manager like PM2
+Backend runs on:
 
----
+```text
+http://localhost:5000
+```
 
-## 📄 License
+### 5. Run frontend
 
-MIT — Built for educational and production use.
+```bash
+npm run dev:frontend
+```
+
+Frontend runs on:
+
+```text
+http://localhost:3000
+```
+
+Vite proxy is already configured to forward `/api` requests to backend `http://localhost:5000`.
+
+## Build
+
+Frontend production build:
+
+```bash
+npm run build:frontend
+```
+
+## Demo Testing Flow
+
+### Create account or use seeded user
+
+Login using demo credentials or register a new user.
+
+### Create order
+
+- go to Orders
+- create a new order
+- enter amount, currency, description
+
+### Pay for order
+
+- choose card, UPI, net banking, or wallet
+- submit payment
+- if failed, use retry when attempts remain
+
+### Check logs
+
+- open Transactions page for user events
+- open Admin page for global analytics
+
+## Interview Value
+
+This project is strong for interviews because it demonstrates:
+
+- full stack architecture
+- modular backend design
+- practical payment concepts
+- authentication and authorization
+- observability and audit logging
+- security-aware data handling
+- polished product UI, not just backend APIs
+
+## Notes
+
+- Generated interview docs in `docs/` are ignored from Git.
+- Logs and build output are also ignored through `.gitignore`.
+- There is a stray file `backend/1.py` in the repo which does not appear to be part of the main application flow.
+
+## License
+
+MIT

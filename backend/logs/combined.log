@@ -11,3 +11,5 @@
 {"level":"info","message":"New user registered: anuragverma4895@gmail.com","service":"payment-gateway","timestamp":"2026-02-27 00:35:21"}
 {"level":"info","message":"🚀 Server running on port 5000","service":"payment-gateway","timestamp":"2026-04-29 18:07:26"}
 {"level":"info","message":"MongoDB Connected: ac-sh9snzj-shard-00-00.1upoidh.mongodb.net","service":"payment-gateway","timestamp":"2026-04-29 18:07:26"}
+{"level":"info","message":"User logged in: user@paygateway.io","service":"payment-gateway","timestamp":"2026-04-29 18:40:04"}
+{"level":"info","message":"User logged in: admin@paygateway.io","service":"payment-gateway","timestamp":"2026-04-29 18:41:25"}
