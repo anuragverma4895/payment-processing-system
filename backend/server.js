@@ -22,34 +22,30 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const webhookRoutes = require('./routes/webhookRoutes');
 
-// Ensure logs dir exists
 const logsDir = path.join(__dirname, 'logs');
 if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir);
 
 const app = express();
 
-// Connect to MongoDB
 connectDB();
 
-// ─── Security Middleware ──────────────────────────────────────────────────────
+// Security middleware
 app.use(helmet());
-
-// ✅ FIXED CORS (PRODUCTION + LOCAL BOTH)
 app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:5173',
-    'https://payment-processing-system-theta.vercel.app'
+    'https://payment-processing-system-theta.vercel.app',
   ],
   credentials: true,
 }));
 
-// ─── Body Parsing ─────────────────────────────────────────────────────────────
+// Body parsing
 app.use('/api/webhooks', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// ─── Logging ──────────────────────────────────────────────────────────────────
+// Request logging
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 } else {
@@ -58,25 +54,25 @@ if (process.env.NODE_ENV === 'development') {
   }));
 }
 
-// ─── Rate Limiting ────────────────────────────────────────────────────────────
+// Rate limiting
 app.use('/api', globalLimiter);
 
-// ─── API Routes ───────────────────────────────────────────────────────────────
+// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/webhooks', webhookRoutes);
 
-// ─── API Docs ─────────────────────────────────────────────────────────────────
+// Swagger API documentation
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'Payment Gateway API Docs',
 }));
 
-// ─── Health Check ─────────────────────────────────────────────────────────────
+// Health checks
 app.get('/', (req, res) => {
-  res.send('🚀 Payment Gateway API is running');
+  res.send('Payment Gateway API is running');
 });
 
 app.get('/health', (req, res) => {
@@ -88,7 +84,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ─── 404 Handler ──────────────────────────────────────────────────────────────
+// 404 handler
 app.all('*', (req, res) => {
   res.status(404).json({
     success: false,
@@ -96,10 +92,10 @@ app.all('*', (req, res) => {
   });
 });
 
-// ─── Global Error Handler ─────────────────────────────────────────────────────
+// Global error handler
 app.use(errorHandler);
 
-// ─── Crash Handling ───────────────────────────────────────────────────────────
+// Crash handling
 process.on('unhandledRejection', (err) => {
   logger.error('UNHANDLED REJECTION:', err);
   process.exit(1);
@@ -110,11 +106,10 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-// ─── Start Server ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  logger.info(`🚀 Server running on port ${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
 });
 
 // Graceful shutdown

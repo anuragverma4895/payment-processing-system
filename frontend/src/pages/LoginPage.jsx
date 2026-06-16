@@ -49,10 +49,6 @@ export default function LoginPage() {
             <br />
             <span>security, depth, and control</span>
           </h1>
-          <p className="auth-desc">
-            Login screen ko bhi ab product story ka hissa banaya gaya hai, taaki first impression professional lage
-            aur aap interview demo me confidently flow explain kar sako.
-          </p>
 
           <ul className="feature-list">
             {featurePoints.map(([badge, text]) => (
@@ -107,7 +103,7 @@ export default function LoginPage() {
               Need an account? <Link to="/signup" className="auth-link">Create one</Link>
             </div>
 
-            <div className="auth-card-note" style={{ marginTop: 24 }}>
+            <div className="auth-card-note" style={{ marginTop: 18 }}>
               <div className="section-title" style={{ fontSize: '1rem' }}>Demo Credentials</div>
               <div className="section-subtitle" style={{ marginTop: 10 }}>
                 admin@paygateway.io / Admin@1234
