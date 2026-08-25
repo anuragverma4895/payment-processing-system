@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -8,8 +9,12 @@ const navItems = [
   { to: '/transactions', icon: 'TX', label: 'Transactions', meta: 'Full event timeline' },
 ];
 
-const NavItem = ({ to, icon, label, meta }) => (
-  <NavLink to={to} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+const NavItem = ({ to, icon, label, meta, onClick }) => (
+  <NavLink
+    to={to}
+    onClick={onClick}
+    className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+  >
     <span className="nav-icon">{icon}</span>
     <span className="nav-copy">
       <strong>{label}</strong>
@@ -22,6 +27,12 @@ export default function Layout() {
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Close sidebar on route change
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -39,13 +50,29 @@ export default function Layout() {
 
   return (
     <div className="layout">
-      <aside className="sidebar">
-        <div className="sidebar-logo">
-          <div className="logo-mark">PG</div>
-          <div>
-            <div className="logo-name">PayGateway</div>
-            <div className="logo-sub">3D Payment Studio</div>
+      {/* Mobile Backdrop */}
+      <div
+        className={`sidebar-backdrop ${sidebarOpen ? 'open' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden="true"
+      />
+
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header-row">
+          <div className="sidebar-logo">
+            <div className="logo-mark">PG</div>
+            <div>
+              <div className="logo-name">PayGateway</div>
+              <div className="logo-sub">3D Payment Studio</div>
+            </div>
           </div>
+          <button
+            className="sidebar-close-btn"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar"
+          >
+            ✕
+          </button>
         </div>
 
         <div className="sidebar-promo hover-lift">
@@ -63,13 +90,21 @@ export default function Layout() {
 
         <div className="nav-section">
           <div className="nav-label">Workspace</div>
-          {navItems.map((item) => <NavItem key={item.to} {...item} />)}
+          {navItems.map((item) => (
+            <NavItem key={item.to} {...item} onClick={() => setSidebarOpen(false)} />
+          ))}
         </div>
 
         {isAdmin && (
           <div className="nav-section">
             <div className="nav-label">Admin</div>
-            <NavItem to="/admin" icon="AD" label="Admin Panel" meta="System-wide oversight" />
+            <NavItem
+              to="/admin"
+              icon="AD"
+              label="Admin Panel"
+              meta="System-wide oversight"
+              onClick={() => setSidebarOpen(false)}
+            />
           </div>
         )}
 
@@ -93,13 +128,24 @@ export default function Layout() {
 
       <main className="main-content">
         <div className="topbar">
-          <div>
-            <div className="topbar-title">Current View</div>
-            <div style={{ fontWeight: 700 }}>{currentTitle}</div>
+          <div className="topbar-left">
+            <button
+              className="menu-toggle-btn"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open navigation menu"
+            >
+              <span className="menu-bar" />
+              <span className="menu-bar" />
+              <span className="menu-bar" />
+            </button>
+            <div>
+              <div className="topbar-title">Current View</div>
+              <div className="topbar-current">{currentTitle}</div>
+            </div>
           </div>
           <div className="topbar-right">
-            <div className="signal-pill"><span className="signal-dot" />Gateway active</div>
-            <div className="signal-pill">{isAdmin ? 'Admin access' : 'User session'}</div>
+            <div className="signal-pill active-status"><span className="signal-dot" />Gateway active</div>
+            <div className="signal-pill role-status">{isAdmin ? 'Admin access' : 'User session'}</div>
           </div>
         </div>
         <Outlet />
