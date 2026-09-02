@@ -75,18 +75,7 @@ export default function Layout() {
           </button>
         </div>
 
-        <div className="sidebar-promo hover-lift">
-          <span className="eyebrow">Smart Flow</span>
-          <h4>Secure checkout with better visual depth</h4>
-          <p>
-            Explore orders, payment retries, analytics, and transaction events from a single polished workspace.
-          </p>
-          <div className="mini-metrics">
-            <div className="mini-metric"><span>Idempotency</span><strong>Enabled</strong></div>
-            <div className="mini-metric"><span>Processing</span><strong>Multi-method</strong></div>
-            <div className="mini-metric"><span>View</span><strong>Realtime-ready</strong></div>
-          </div>
-        </div>
+
 
         <div className="nav-section">
           <div className="nav-label">Workspace</div>
