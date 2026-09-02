@@ -35,7 +35,7 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:5173',
-    'https://payment-processing-system-theta.vercel.app',
+    'https://payment-processing-system-sz7e.onrender.com',
   ],
   credentials: true,
 }));
