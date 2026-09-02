@@ -70,10 +70,14 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'Payment Gateway API Docs',
 }));
 
-// Health checks
-app.get('/', (req, res) => {
-  res.send('Payment Gateway API is running');
-});
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+} else {
+  // Health checks
+  app.get('/', (req, res) => {
+    res.send('Payment Gateway API is running');
+  });
+}
 
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -84,8 +88,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 404 handler
+// SPA fallback and 404 handler
 app.all('*', (req, res) => {
+  if (process.env.NODE_ENV === 'production' && !req.path.startsWith('/api')) {
+    return res.sendFile(path.resolve(__dirname, '../frontend/dist', 'index.html'));
+  }
   res.status(404).json({
     success: false,
     message: `Route ${req.method} ${req.originalUrl} not found`,

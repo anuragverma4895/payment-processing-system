@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Production-grade payment gateway inspired by Juspay/Razorpay",
   "scripts": {
-    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install --include=dev",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "seed": "cd backend && node seed.js",
