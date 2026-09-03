@@ -38,14 +38,26 @@ exports.processPayment = async ({ orderId, userId, method, cardDetails, upiDetai
 
   // Process card details securely
   if (method === 'card' && cardDetails) {
-    paymentData.cardDetails = {
-      maskedNumber: cryptoUtil.maskCardNumber(cardDetails.number),
-      cardHash: cryptoUtil.hashCardNumber(cardDetails.number),
-      cardType: cryptoUtil.detectCardType(cardDetails.number),
-      expiryMonth: cardDetails.expiryMonth,
-      expiryYear: cardDetails.expiryYear,
-      // CVV is NEVER stored - not even hashed
-    };
+    if (cardDetails.maskedNumber) {
+      // Pre-processed from internal recovery retry (already safe, no raw data)
+      paymentData.cardDetails = {
+        maskedNumber: cardDetails.maskedNumber,
+        cardHash: cardDetails.cardHash,
+        cardType: cardDetails.cardType,
+        expiryMonth: cardDetails.expiryMonth,
+        expiryYear: cardDetails.expiryYear,
+      };
+    } else {
+      // Normal user payment with raw card details
+      paymentData.cardDetails = {
+        maskedNumber: cryptoUtil.maskCardNumber(cardDetails.number),
+        cardHash: cryptoUtil.hashCardNumber(cardDetails.number),
+        cardType: cryptoUtil.detectCardType(cardDetails.number),
+        expiryMonth: cardDetails.expiryMonth,
+        expiryYear: cardDetails.expiryYear,
+        // CVV is NEVER stored - not even hashed
+      };
+    }
   }
 
   if (method === 'upi' && upiDetails) {

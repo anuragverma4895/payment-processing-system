@@ -32,6 +32,10 @@ const transactionLogSchema = new mongoose.Schema(
         'webhook.sent',
         'webhook.failed',
         'idempotency.hit',
+        // Recovery Agent integration events
+        'recovery.notified',
+        'recovery.notification_failed',
+        'recovery.retry_requested',
       ],
     },
     status: {
