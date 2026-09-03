@@ -6,6 +6,8 @@ const AppError = require('../utils/AppError');
 const { v4: uuidv4 } = require('uuid');
 const logger = require('../config/logger');
 
+const SUPPORTED_RECOVERY_METHODS = ['card', 'upi', 'netbanking', 'wallet'];
+
 /**
  * Internal retry endpoint for the AI Revenue Recovery Agent.
  *
@@ -14,7 +16,7 @@ const logger = require('../config/logger');
  *   2. Look up Order from DB to get the real userId (never trust client-sent userId)
  *   3. Check for duplicate recovery actions via recoveryActionId
  *   4. Look up last failed Payment to reuse method/cardDetails/upiDetails
- *   5. Call existing paymentService.retryPayment() — no new payment logic
+ *   5. Call existing paymentService.retryPayment() - no new payment logic
  *   6. Return the real result
  *
  * Security:
@@ -23,13 +25,17 @@ const logger = require('../config/logger');
  *   - Reuses already-masked/hashed card details from the stored Payment record
  */
 exports.retryPayment = async (req, res, next) => {
-  const { orderId, recoveryActionId, method: overrideMethod } = req.body;
+  const { orderId, recoveryActionId, method: overrideMethod, cardDetails: rawCardDetails, upiDetails: rawUpiDetails } = req.body;
 
   if (!orderId) {
     return next(new AppError('orderId is required.', 400));
   }
 
-  // Look up the order to get the real userId — never trust client-sent userId
+  if (rawCardDetails || rawUpiDetails) {
+    return next(new AppError('Raw payment details are not accepted by the internal retry API.', 400));
+  }
+
+  // Look up the order to get the real userId - never trust client-sent userId
   const order = await Order.findOne({ orderId });
   if (!order) {
     return next(new AppError('Order not found.', 404));
@@ -37,27 +43,13 @@ exports.retryPayment = async (req, res, next) => {
 
   const userId = order.userId;
 
-  // Log that an internal recovery retry was requested
-  await transactionLogger.log({
-    orderId: order._id,
-    userId,
-    event: 'recovery.retry_requested',
-    status: 'info',
-    message: `Internal recovery retry requested for order ${orderId}`,
-    metadata: {
-      recoveryActionId: recoveryActionId || null,
-      source: 'recovery_agent',
-    },
-    req,
-  });
-
-  // Idempotency: check for duplicate recovery actions
+  // Idempotency: check duplicate recovery actions before state guards so
+  // retries of the same successful action remain replay-safe.
   if (recoveryActionId) {
     const idempotencyKey = `recovery_${recoveryActionId}`;
     const existingPayment = await Payment.findOne({ idempotencyKey });
 
     if (existingPayment) {
-      // Re-fetch the current order state for accurate response
       const currentOrder = await Order.findById(order._id);
 
       logger.info(`Duplicate recovery action detected: ${recoveryActionId}`);
@@ -88,21 +80,56 @@ exports.retryPayment = async (req, res, next) => {
     }
   }
 
+  if (order.status === 'paid') {
+    return next(new AppError('Order is already paid.', 409));
+  }
+
+  if (order.status === 'cancelled') {
+    return next(new AppError('Order has been cancelled.', 409));
+  }
+
+  if (order.attempts >= order.maxAttempts) {
+    return next(new AppError(`Maximum retry attempts (${order.maxAttempts}) reached for this order.`, 422));
+  }
+
+  // Log that an internal recovery retry was requested
+  await transactionLogger.log({
+    orderId: order._id,
+    userId,
+    event: 'recovery.retry_requested',
+    status: 'info',
+    message: `Internal recovery retry requested for order ${orderId}`,
+    metadata: {
+      recoveryActionId: recoveryActionId || null,
+      source: 'recovery_agent',
+    },
+    req,
+  });
   // Look up the last failed payment for this order to reuse method/details
   const lastPayment = await Payment.findOne({
     orderId: order._id,
     status: 'failed',
   }).sort({ createdAt: -1 });
 
-  // Determine payment method: use override if provided, else last payment's method, else 'card'
-  const method = overrideMethod || lastPayment?.method || 'card';
+  if (!lastPayment) {
+    return next(new AppError('No failed payment attempt found for this order.', 422));
+  }
 
-  // Reuse stored (already safe) card/upi details from last payment
-  // These are already masked/hashed — no raw card numbers
+  // Determine payment method: use override if provided, else last payment's method.
+  const method = overrideMethod || lastPayment.method;
+  if (!SUPPORTED_RECOVERY_METHODS.includes(method)) {
+    return next(new AppError('Invalid payment method for recovery retry.', 400));
+  }
+
+  // Reuse stored (already safe) card/UPI details from last payment.
   let cardDetails = null;
   let upiDetails = null;
 
-  if (method === 'card' && lastPayment?.cardDetails) {
+  if (method === 'card') {
+    if (!lastPayment.cardDetails?.maskedNumber || !lastPayment.cardDetails?.cardHash) {
+      return next(new AppError('Stored card details are not available for recovery retry.', 422));
+    }
+
     cardDetails = {
       maskedNumber: lastPayment.cardDetails.maskedNumber,
       cardHash: lastPayment.cardDetails.cardHash,
@@ -112,11 +139,14 @@ exports.retryPayment = async (req, res, next) => {
     };
   }
 
-  if (method === 'upi' && lastPayment?.upiDetails) {
+  if (method === 'upi') {
+    if (!lastPayment.upiDetails?.vpa) {
+      return next(new AppError('Stored UPI details are not available for recovery retry.', 422));
+    }
+
     upiDetails = { vpa: lastPayment.upiDetails.vpa };
   }
-
-  // Generate idempotency key — deterministic if recoveryActionId is provided
+  // Generate idempotency key - deterministic if recoveryActionId is provided
   const idempotencyKey = recoveryActionId
     ? `recovery_${recoveryActionId}`
     : `recovery_${uuidv4()}`;
@@ -161,7 +191,7 @@ exports.retryPayment = async (req, res, next) => {
     });
   } catch (error) {
     // AppErrors from paymentService (expired, maxAttempts, already paid, etc.)
-    // are handled by the global error handler — the Recovery Agent gets a clear reason
+    // are handled by the global error handler - the Recovery Agent gets a clear reason
     return next(error);
   }
 };

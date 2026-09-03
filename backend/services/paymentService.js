@@ -154,10 +154,15 @@ exports.processPayment = async ({ orderId, userId, method, cardDetails, upiDetai
     payment.gatewayResponse = engineResult.gatewayResponse;
     await payment.save();
 
-    const remainingAttempts = order.maxAttempts - order.attempts;
-    const newOrderStatus = order.attempts >= order.maxAttempts ? 'failed' : 'created';
+    const attemptsUsed = order.attempts + 1;
+    const remainingAttempts = Math.max(0, order.maxAttempts - attemptsUsed);
+    const newOrderStatus = attemptsUsed >= order.maxAttempts ? 'failed' : 'created';
 
-    await Order.findByIdAndUpdate(order._id, { status: newOrderStatus });
+    const updatedOrder = await Order.findByIdAndUpdate(
+      order._id,
+      { status: newOrderStatus },
+      { new: true }
+    );
 
     await transactionLogger.log({
       paymentId: payment._id,
@@ -166,12 +171,12 @@ exports.processPayment = async ({ orderId, userId, method, cardDetails, upiDetai
       event: 'payment.failed',
       status: 'error',
       message: `Payment ${payment.paymentId} failed: ${engineResult.failureReason}`,
-      metadata: { failureReason: engineResult.failureReason, remainingAttempts: Math.max(0, remainingAttempts - 1), duration },
+      metadata: { failureReason: engineResult.failureReason, remainingAttempts, duration },
       req,
       duration,
     });
 
-    webhookService.sendWebhook({ payment, order });
+    webhookService.sendWebhook({ payment, order: updatedOrder });
   }
 
   return {

@@ -97,9 +97,16 @@ export default function PaymentPage() {
         toast.error(isRetry ? 'Retry failed' : 'Payment failed');
       }
     } catch (err) {
-      const message = err.response?.data?.message || (isRetry ? 'Retry failed' : 'Payment failed');
-      setError(message);
-      toast.error(message);
+      const failedResult = err.response?.status === 402 ? err.response?.data : null;
+      if (failedResult?.data?.payment) {
+        setResult(failedResult);
+        if (failedResult.data.order) setOrder(failedResult.data.order);
+        toast.error(isRetry ? 'Retry failed' : 'Payment failed');
+      } else {
+        const message = err.response?.data?.message || (isRetry ? 'Retry failed' : 'Payment failed');
+        setError(message);
+        toast.error(message);
+      }
     } finally {
       setProcessing(false);
     }

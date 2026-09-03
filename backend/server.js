@@ -1,4 +1,5 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 require('express-async-errors');
 
 const express = require('express');
@@ -6,12 +7,12 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const swaggerUi = require('swagger-ui-express');
-const path = require('path');
 const fs = require('fs');
 
 const connectDB = require('./config/database');
 const swaggerSpec = require('./config/swagger');
 const logger = require('./config/logger');
+const paymentConfig = require('./config/payment');
 const { globalLimiter } = require('./middlewares/rateLimiter');
 const errorHandler = require('./middlewares/errorHandler');
 
@@ -28,16 +29,19 @@ if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir);
 
 const app = express();
 
+logger.info(`Payment configuration: PAYMENT_SUCCESS_RATE=${paymentConfig.successRate}, PAYMENT_MIN_DELAY_MS=${paymentConfig.minDelayMs}, PAYMENT_MAX_DELAY_MS=${paymentConfig.maxDelayMs}`);
+
 connectDB();
 
 // Security middleware
 app.use(helmet());
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://payment-processing-system-sz7e.onrender.com',
-  ],
+  origin: allowedOrigins,
   credentials: true,
 }));
 

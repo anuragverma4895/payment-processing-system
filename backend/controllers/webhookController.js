@@ -6,15 +6,22 @@ const logger = require('../config/logger');
 
 exports.receiveWebhook = async (req, res, next) => {
   const signature = req.headers['x-webhook-signature'];
-  const secret = process.env.WEBHOOK_SECRET || 'default_secret';
+  const secret = process.env.WEBHOOK_SECRET;
 
-  // Verify webhook signature
-  if (signature) {
-    const isValid = cryptoUtil.verifyWebhookSignature(req.body, signature, secret);
-    if (!isValid) {
-      logger.warn('Webhook received with invalid signature');
-      return res.status(401).json({ success: false, message: 'Invalid webhook signature' });
-    }
+  if (!secret) {
+    logger.error('WEBHOOK_SECRET environment variable is not configured.');
+    return res.status(500).json({ success: false, message: 'Webhook verification is not configured' });
+  }
+
+  if (!signature) {
+    logger.warn('Webhook received without signature');
+    return res.status(401).json({ success: false, message: 'Webhook signature is required' });
+  }
+
+  const isValid = cryptoUtil.verifyWebhookSignature(req.body, signature, secret);
+  if (!isValid) {
+    logger.warn('Webhook received with invalid signature');
+    return res.status(401).json({ success: false, message: 'Invalid webhook signature' });
   }
 
   const { event, paymentId, orderId, status } = req.body;

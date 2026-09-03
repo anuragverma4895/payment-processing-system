@@ -29,8 +29,9 @@ exports.generateWebhookSignature = (payload, secret) => {
 
 exports.verifyWebhookSignature = (payload, signature, secret) => {
   const expected = exports.generateWebhookSignature(payload, secret);
-  return crypto.timingSafeEqual(
-    Buffer.from(signature, 'hex'),
-    Buffer.from(expected, 'hex')
-  );
+  const receivedBuffer = Buffer.from(signature, 'hex');
+  const expectedBuffer = Buffer.from(expected, 'hex');
+
+  return receivedBuffer.length === expectedBuffer.length &&
+    crypto.timingSafeEqual(receivedBuffer, expectedBuffer);
 };

@@ -10,7 +10,7 @@ const options = {
       contact: { name: 'API Support', email: 'support@paygateway.io' },
     },
     servers: [
-      { url: 'http://localhost:5000/api', description: 'Development server' },
+      { url: process.env.API_PUBLIC_URL || '/api', description: 'API server' },
     ],
     components: {
       securitySchemes: {

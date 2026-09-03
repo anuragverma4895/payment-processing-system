@@ -8,9 +8,44 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: WEBHOOK_SECRET
+        sync: false
+      - key: RECOVERY_AGENT_URL
+        sync: false
+      - key: RECOVERY_WEBHOOK_SECRET
+        sync: false
+      - key: RECOVERY_WEBHOOK_TIMEOUT_MS
+        value: 5000
+      - key: INTERNAL_API_KEY
+        sync: false
+      - key: API_PUBLIC_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX
+        value: 100
+      - key: PAYMENT_SUCCESS_RATE
+        value: 0.85
+      - key: PAYMENT_MIN_DELAY_MS
+        value: 500
+      - key: PAYMENT_MAX_DELAY_MS
+        value: 3000
 
   - type: static_site
     name: payment-frontend
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
