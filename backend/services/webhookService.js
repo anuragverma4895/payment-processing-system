@@ -2,7 +2,9 @@ const crypto = require('../utils/crypto');
 const logger = require('../config/logger');
 const transactionLogger = require('./transactionLogger');
 
-const RECOVERY_WEBHOOK_TIMEOUT_MS = Number(process.env.RECOVERY_WEBHOOK_TIMEOUT_MS || 5000);
+const RECOVERY_WEBHOOK_TIMEOUT_MS = process.env.RECOVERY_WEBHOOK_TIMEOUT_MS !== undefined
+  ? Number(process.env.RECOVERY_WEBHOOK_TIMEOUT_MS)
+  : 5000;
 
 const normalizeGatewayResponse = (gatewayResponse) => {
   if (!gatewayResponse) return null;
