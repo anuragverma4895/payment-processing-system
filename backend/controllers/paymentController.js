@@ -3,7 +3,7 @@ const Payment = require('../models/Payment');
 const AppError = require('../utils/AppError');
 
 exports.initiatePayment = async (req, res, next) => {
-  const { orderId, method, cardDetails, upiDetails } = req.body;
+  const { orderId, method, cardDetails, upiDetails, netBankingDetails, walletDetails } = req.body;
 
   const result = await paymentService.processPayment({
     orderId,
@@ -11,6 +11,8 @@ exports.initiatePayment = async (req, res, next) => {
     method,
     cardDetails,
     upiDetails,
+    netBankingDetails,
+    walletDetails,
     idempotencyKey: req.idempotencyKey,
     req,
   });
