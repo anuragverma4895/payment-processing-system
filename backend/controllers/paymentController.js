@@ -29,6 +29,8 @@ exports.initiatePayment = async (req, res, next) => {
         amount: result.payment.amount,
         currency: result.payment.currency,
         method: result.payment.method,
+        netBankingDetails: result.payment.netBankingDetails,
+        walletDetails: result.payment.walletDetails,
         failureReason: result.payment.failureReason,
         processedAt: result.payment.processedAt,
       },
