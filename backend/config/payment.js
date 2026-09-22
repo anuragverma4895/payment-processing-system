@@ -1,6 +1,7 @@
 const DEFAULT_PAYMENT_SUCCESS_RATE = 0.85;
 const DEFAULT_PAYMENT_MIN_DELAY_MS = 500;
 const DEFAULT_PAYMENT_MAX_DELAY_MS = 3000;
+const DEFAULT_PAYMENT_FORCE_OUTCOME = 'auto';
 
 const parseOptionalNumber = (name, fallback) => {
   const rawValue = process.env[name];
@@ -34,7 +35,16 @@ const parseDelay = (name, fallback) => {
   return value;
 };
 
+const parseForceOutcome = () => {
+  const value = (process.env.PAYMENT_FORCE_OUTCOME || DEFAULT_PAYMENT_FORCE_OUTCOME).toLowerCase();
+  if (!['auto', 'success', 'failure'].includes(value)) {
+    throw new Error('PAYMENT_FORCE_OUTCOME must be one of: auto, success, failure.');
+  }
+  return value;
+};
+
 const successRate = parsePaymentSuccessRate();
+const forceOutcome = parseForceOutcome();
 const minDelayMs = parseDelay('PAYMENT_MIN_DELAY_MS', DEFAULT_PAYMENT_MIN_DELAY_MS);
 const configuredMaxDelayMs = parseDelay('PAYMENT_MAX_DELAY_MS', DEFAULT_PAYMENT_MAX_DELAY_MS);
 const maxDelayMs = Math.max(minDelayMs, configuredMaxDelayMs);
@@ -43,4 +53,5 @@ module.exports = {
   successRate,
   minDelayMs,
   maxDelayMs,
+  forceOutcome,
 };
