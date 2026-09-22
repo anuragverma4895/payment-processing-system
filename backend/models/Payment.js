@@ -51,6 +51,14 @@ const paymentSchema = new mongoose.Schema(
     upiDetails: {
       vpa: String,             // Virtual Payment Address
     },
+    // Net banking provider (simulation metadata only)
+    netBankingDetails: {
+      bank: String,
+    },
+    // Wallet provider (simulation metadata only)
+    walletDetails: {
+      wallet: String,
+    },
     gatewayResponse: {
       type: Object,
     },
