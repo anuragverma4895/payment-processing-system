@@ -49,13 +49,45 @@ exports.idempotencyCheck = async (req, res, next) => {
     });
   }
 
-  // Create new idempotency record
-  const record = await IdempotencyKey.create({
+  // Create new idempotency record. A unique index protects against concurrent
+  // requests racing to claim the same key; return the existing state if that happens.
+  let record;
+  try {
+    record = await IdempotencyKey.create({
     key: idempotencyKey,
     userId: req.user.id,
     requestHash,
     status: 'processing',
   });
+  } catch (error) {
+    if (error?.code !== 11000) throw error;
+
+    const racedRecord = await IdempotencyKey.findOne({
+      key: idempotencyKey,
+      userId: req.user.id,
+    });
+
+    if (!racedRecord) throw error;
+    if (racedRecord.requestHash !== requestHash) {
+      return res.status(409).json({
+        success: false,
+        message: 'Idempotency-Key has already been used with a different request payload.',
+        code: 'IDEMPOTENCY_KEY_REUSED',
+      });
+    }
+    if (racedRecord.status === 'processing') {
+      return res.status(409).json({
+        success: false,
+        message: 'A request with this idempotency key is currently being processed.',
+        code: 'IDEMPOTENCY_CONFLICT',
+      });
+    }
+    return res.status(200).json({
+      ...(racedRecord.response || {}),
+      idempotencyHit: true,
+      message: racedRecord.response?.message || 'Duplicate request detected. Returning cached response.',
+    });
+  }
 
   req.idempotencyKey = idempotencyKey;
   req.idempotencyRecord = record;
@@ -63,7 +95,7 @@ exports.idempotencyCheck = async (req, res, next) => {
   // Override res.json to capture response and save it
   const originalJson = res.json.bind(res);
   res.json = async (body) => {
-    if (res.statusCode >= 200 && res.statusCode < 300) {
+    if (res.statusCode >= 200 && res.statusCode < 500) {
       await IdempotencyKey.findByIdAndUpdate(record._id, {
         response: body,
         status: 'completed',
