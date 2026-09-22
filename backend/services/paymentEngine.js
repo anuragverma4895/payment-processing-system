@@ -4,6 +4,7 @@ const paymentConfig = require('../config/payment');
 const SUCCESS_RATE = paymentConfig.successRate;
 const MIN_DELAY = paymentConfig.minDelayMs;
 const MAX_DELAY = paymentConfig.maxDelayMs;
+const FORCE_OUTCOME = paymentConfig.forceOutcome;
 
 const FAILURE_REASONS = [
   'Insufficient funds',
@@ -47,7 +48,7 @@ exports.processCardPayment = async ({ amount, currency, cardDetails, orderId }) 
   // Simulate network delay
   await randomDelay();
 
-  const isSuccess = Math.random() < SUCCESS_RATE;
+  const isSuccess = FORCE_OUTCOME === 'success' || (FORCE_OUTCOME === 'auto' && Math.random() < SUCCESS_RATE);
   const rrn = generateRRN();
   const duration = Date.now() - startTime;
 
