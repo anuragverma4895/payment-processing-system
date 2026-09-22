@@ -24,6 +24,14 @@ exports.idempotencyCheck = async (req, res, next) => {
   });
 
   if (existing) {
+    if (existing.requestHash !== requestHash) {
+      return res.status(409).json({
+        success: false,
+        message: 'Idempotency-Key has already been used with a different request payload.',
+        code: 'IDEMPOTENCY_KEY_REUSED',
+      });
+    }
+
     if (existing.status === 'processing') {
       return res.status(409).json({
         success: false,
@@ -33,11 +41,11 @@ exports.idempotencyCheck = async (req, res, next) => {
     }
 
     // Return cached response for completed requests
+    const cachedResponse = existing.response || {};
     return res.status(200).json({
-      success: true,
-      message: 'Duplicate request detected. Returning cached response.',
+      ...cachedResponse,
       idempotencyHit: true,
-      data: existing.response,
+      message: cachedResponse.message || 'Duplicate request detected. Returning cached response.',
     });
   }
 

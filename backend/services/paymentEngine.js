@@ -20,6 +20,7 @@ const CARD_NETWORK_RESPONSES = {
   visa: { code: 'VI', name: 'Visa' },
   mastercard: { code: 'MC', name: 'Mastercard' },
   amex: { code: 'AX', name: 'American Express' },
+  discover: { code: 'DS', name: 'Discover' },
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

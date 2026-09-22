@@ -4,6 +4,12 @@ const Payment = require('../models/Payment');
 const transactionLogger = require('../services/transactionLogger');
 const logger = require('../config/logger');
 
+const parseWebhookBody = (body) => {
+  if (Buffer.isBuffer(body)) return JSON.parse(body.toString('utf8'));
+  if (typeof body === 'string') return JSON.parse(body);
+  return body;
+};
+
 exports.receiveWebhook = async (req, res, next) => {
   const signature = req.headers['x-webhook-signature'];
   const secret = process.env.WEBHOOK_SECRET;
@@ -24,7 +30,15 @@ exports.receiveWebhook = async (req, res, next) => {
     return res.status(401).json({ success: false, message: 'Invalid webhook signature' });
   }
 
-  const { event, paymentId, orderId, status } = req.body;
+  let payload;
+  try {
+    payload = parseWebhookBody(req.body);
+  } catch (error) {
+    logger.warn(`Webhook received with invalid JSON: ${error.message}`);
+    return res.status(400).json({ success: false, message: 'Invalid webhook payload' });
+  }
+
+  const { event, paymentId, orderId } = payload;
 
   logger.info(`Webhook received: ${event} for payment ${paymentId}`);
 
@@ -37,6 +51,7 @@ exports.receiveWebhook = async (req, res, next) => {
       await transactionLogger.log({
         paymentId: payment._id,
         orderId: order._id,
+        userId: payment.userId,
         event: 'webhook.sent',
         status: 'info',
         message: `Webhook processed: ${event}`,

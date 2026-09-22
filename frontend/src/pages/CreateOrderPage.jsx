@@ -66,7 +66,7 @@ export default function CreateOrderPage() {
       <div className="page-header">
         <div className="page-title">Create Order</div>
         <div className="page-subtitle">
-          Amount, currency, description aur metadata ke saath ek clean order generate karo aur direct checkout flow me jao.
+          Generate a clean order with amount, currency, description, and metadata, then proceed directly to the checkout flow.
         </div>
       </div>
 
@@ -78,28 +78,27 @@ export default function CreateOrderPage() {
             <div className="section-title">Live Order Preview</div>
             <div className="section-subtitle">3D preview card that updates as you type</div>
 
-            <div className="card" style={{ marginTop: 20, background: 'var(--gradient-highlight)' }}>
-              <div className="order-preview">
-                <div>
-                  <span className="eyebrow">Preview</span>
-                  <div style={{ fontSize: '2.4rem', fontWeight: 800, marginTop: 16 }}>{previewAmount}</div>
-                  <div style={{ marginTop: 10, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                    {form.description || 'No description added yet. Use this to explain the order purpose clearly.'}
-                  </div>
-                  <div className="mini-metrics" style={{ marginTop: 18 }}>
-                    <div className="mini-metric"><span>Currency</span><strong>{form.currency}</strong></div>
-                    <div className="mini-metric"><span>Metadata fields</span><strong>{Object.keys(metadataObject).length}</strong></div>
-                    <div className="mini-metric"><span>Expiry pattern</span><strong>30 min default</strong></div>
+              <div className="card" style={{ marginTop: 20, background: 'var(--bg-soft)' }}>
+                <div className="order-preview">
+                  <div>
+                    <span className="eyebrow">Preview</span>
+                    <div style={{ fontSize: '2.4rem', fontWeight: 800, marginTop: 16 }}>{previewAmount}</div>
+                    <div style={{ marginTop: 10, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                      {form.description || 'No description added yet. Use this to explain the order purpose clearly.'}
+                    </div>
+                    <div className="mini-metrics" style={{ marginTop: 18 }}>
+                      <div className="mini-metric"><span>Currency</span><strong>{form.currency}</strong></div>
+                      <div className="mini-metric"><span>Metadata fields</span><strong>{Object.keys(metadataObject).length}</strong></div>
+                      <div className="mini-metric"><span>Expiry pattern</span><strong>30 min default</strong></div>
+                    </div>
                   </div>
                 </div>
-                <div className="preview-orb" />
-              </div>
             </div>
 
-            <div className="soft-card" style={{ marginTop: 20 }}>
+            <div className="card-sm" style={{ marginTop: 20 }}>
               <div className="section-title" style={{ fontSize: '1rem' }}>Why metadata matters</div>
               <div className="section-subtitle">
-                Interview me aap bata sakte ho ki metadata future reconciliation, analytics, aur segment-based reporting ke liye helpful hota hai.
+                Metadata is highly valuable for future reconciliation, analytics, and segment-based reporting in production systems.
               </div>
             </div>
           </section>

@@ -5,7 +5,6 @@ const idempotencyKeySchema = new mongoose.Schema(
     key: {
       type: String,
       required: true,
-      unique: true,
       index: true,
     },
     userId: {
@@ -35,5 +34,7 @@ const idempotencyKeySchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+idempotencyKeySchema.index({ key: 1, userId: 1 }, { unique: true });
 
 module.exports = mongoose.model('IdempotencyKey', idempotencyKeySchema);

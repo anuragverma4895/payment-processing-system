@@ -50,8 +50,7 @@ export default function SignupPage() {
             <span>from the first screen</span>
           </h1>
           <p className="auth-desc">
-            Signup area ko bhi redesign kiya gaya hai taaki poora product modern lage aur onboarding screen se hi
-            system ke core strengths visible ho jaayen.
+            The signup flow is designed to feel native to modern SaaS platforms, highlighting core features before you even enter the product.
           </p>
 
           <ul className="feature-list">

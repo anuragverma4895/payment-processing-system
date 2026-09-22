@@ -71,8 +71,8 @@ export default function AdminPage() {
               <span className="eyebrow">Control Tower</span>
               <h2>Operational clarity for payment leadership.</h2>
               <p>
-                Admin area ko ek polished overview me convert kiya gaya hai jahan aap revenue, failures, method mix, aur
-                recent events ko clearly explain kar sako during demos or interviews.
+                The admin area provides a polished overview where you can clearly explain revenue, failures, method mix, and
+                recent events during demos or interviews.
               </p>
             </div>
             <div className="card hover-lift">

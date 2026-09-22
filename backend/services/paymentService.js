@@ -7,7 +7,7 @@ const cryptoUtil = require('../utils/crypto');
 const AppError = require('../utils/AppError');
 const logger = require('../config/logger');
 
-const MAX_RETRY_ATTEMPTS = 3;
+// Note: Max retry attempts are configured per-order via order.maxAttempts (default 3)
 
 /**
  * Process a payment for an order

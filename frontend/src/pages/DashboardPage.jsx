@@ -85,7 +85,7 @@ export default function DashboardPage() {
       <div className="page-header">
         <div className="page-title">Dashboard</div>
         <div className="page-subtitle">
-          {user?.name}, yahan se aap orders, payments, retries, aur transaction health sab ek jagah monitor kar sakte ho.
+          Welcome back, {user?.name}. Monitor your orders, payments, retries, and overall transaction health from this command center.
         </div>
       </div>
 
@@ -94,10 +94,10 @@ export default function DashboardPage() {
           <div className="hero-layout">
             <div>
               <span className="eyebrow">Gateway Overview</span>
-              <h2>Modern payments with a sharper 3D command center.</h2>
+              <h2>Modern payments with a sharper command center.</h2>
               <p>
-                Yeh view ab sirf summary nahi hai. Isme quick actions, live performance signals, active order visibility,
-                aur payment flow understanding ko ek polished space me combine kiya gaya hai.
+                This dashboard provides quick actions, live performance signals, active order visibility,
+                and a deep understanding of your payment flow in one polished workspace.
               </p>
               <div className="hero-actions">
                 <Link to="/orders/new" className="btn btn-primary btn-lg">Create order</Link>
@@ -106,12 +106,11 @@ export default function DashboardPage() {
             </div>
 
             <div className="hero-side">
-              <div className="card orbit-card hover-lift">
+              <div className="card hover-lift" style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
                   <div className="section-title">Session Intelligence</div>
                   <div className="section-subtitle">Fast read of your latest payment posture</div>
                 </div>
-                <div className="orbital-ring" />
                 <div className="mini-metrics">
                   {timelineData.map((item) => (
                     <div key={item.label} className="mini-metric">

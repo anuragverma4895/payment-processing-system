@@ -1,10 +1,17 @@
 const crypto = require('../utils/crypto');
 const logger = require('../config/logger');
 const transactionLogger = require('./transactionLogger');
+const Payment = require('../models/Payment');
 
-const RECOVERY_WEBHOOK_TIMEOUT_MS = process.env.RECOVERY_WEBHOOK_TIMEOUT_MS !== undefined
-  ? Number(process.env.RECOVERY_WEBHOOK_TIMEOUT_MS)
-  : 5000;
+const parseRecoveryWebhookTimeout = () => {
+  const configuredTimeout = process.env.RECOVERY_WEBHOOK_TIMEOUT_MS;
+  if (configuredTimeout === undefined) return 5000;
+
+  const timeoutMs = Number(configuredTimeout);
+  return Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 5000;
+};
+
+const RECOVERY_WEBHOOK_TIMEOUT_MS = parseRecoveryWebhookTimeout();
 
 const normalizeGatewayResponse = (gatewayResponse) => {
   if (!gatewayResponse) return null;
@@ -48,6 +55,11 @@ exports.sendWebhook = async ({ payment, order }) => {
       event: payload.event,
       signatureConfigured: Boolean(merchantSignature),
     });
+
+    await Payment.findByIdAndUpdate(payment._id, {
+      webhookSent: true,
+      webhookSentAt: new Date(),
+    }).catch((err) => logger.error('Failed to update webhook status:', err.message));
 
     await transactionLogger.log({
       paymentId: payment._id,
@@ -127,17 +139,20 @@ async function notifyRecoveryAgent(payload, payment, order) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), RECOVERY_WEBHOOK_TIMEOUT_MS);
 
-    const response = await fetch(notifyEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-webhook-signature': signature,
-      },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeout);
+    let response;
+    try {
+      response = await fetch(notifyEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-webhook-signature': signature,
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (response.ok) {
       logger.info(`[RECOVERY] Recovery Agent notified successfully for ${payment.paymentId} (HTTP ${response.status})`);

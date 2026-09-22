@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
 
 const paymentSchema = new mongoose.Schema(
   {
@@ -44,7 +43,7 @@ const paymentSchema = new mongoose.Schema(
     cardDetails: {
       maskedNumber: String,    // e.g., **** **** **** 4242
       cardHash: String,        // SHA-256 hash of full card number
-      cardType: String,        // visa, mastercard, amex
+      cardType: String,        // visa, mastercard, amex, discover
       expiryMonth: String,
       expiryYear: String,
     },
@@ -77,7 +76,6 @@ const paymentSchema = new mongoose.Schema(
   }
 );
 
-paymentSchema.index({ paymentId: 1 });
 paymentSchema.index({ orderId: 1, status: 1 });
 paymentSchema.index({ userId: 1, createdAt: -1 });
 
