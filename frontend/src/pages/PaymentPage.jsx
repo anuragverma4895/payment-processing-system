@@ -175,7 +175,7 @@ export default function PaymentPage() {
 
       <div className="page-header">
         <div className="page-title">Checkout</div>
-        <div className="page-subtitle">3D payment experience with trust signals, live card preview, and method guidance.</div>
+        <div className="page-subtitle">Review the order, choose a payment method, and process the transaction securely.</div>
       </div>
 
       <div className="page-body">
@@ -218,7 +218,7 @@ export default function PaymentPage() {
             </div>
 
             <div className="soft-card">
-              <div className="section-title" style={{ fontSize: '1rem', marginBottom: 12 }}>Why this flow feels stronger now</div>
+              <div className="section-title" style={{ fontSize: '1rem', marginBottom: 12 }}>Security & Reliability</div>
               <div className="trust-list">
                 {trustPoints.map((point) => (
                   <div key={point} className="trust-item">
