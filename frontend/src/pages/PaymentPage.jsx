@@ -87,6 +87,14 @@ export default function PaymentPage() {
     return payload;
   };
 
+  const canSubmit = method === 'card'
+    ? Boolean(cardForm.number && cardForm.expiryMonth && cardForm.expiryYear && cardForm.cvv)
+    : method === 'upi'
+      ? Boolean(upiForm.vpa)
+      : method === 'netbanking'
+        ? Boolean(netBankingForm.bank)
+        : Boolean(walletForm.wallet);
+
   const handlePay = async (isRetry = false) => {
     setError('');
     setProcessing(true);
@@ -408,7 +416,7 @@ export default function PaymentPage() {
             <button
               className="btn btn-primary btn-block btn-lg"
               onClick={() => handlePay(false)}
-              disabled={processing || order.status === 'paid'}
+              disabled={processing || order.status === 'paid' || !canSubmit}
             >
               {processing ? <><div className="spinner" style={{ width: 16, height: 16 }} /> Processing...</> : `Pay ${formatCurrency(order.amount, order.currency)}`}
             </button>
