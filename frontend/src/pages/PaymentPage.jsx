@@ -35,6 +35,8 @@ export default function PaymentPage() {
   const [error, setError] = useState('');
   const [cardForm, setCardForm] = useState({ number: '', expiryMonth: '', expiryYear: '', cvv: '', name: '' });
   const [upiForm, setUpiForm] = useState({ vpa: '' });
+  const [netBankingForm, setNetBankingForm] = useState({ bank: '' });
+  const [walletForm, setWalletForm] = useState({ wallet: '' });
 
   useEffect(() => {
     orderAPI.getById(orderId)
@@ -75,6 +77,12 @@ export default function PaymentPage() {
     }
     if (method === 'upi') {
       payload.upiDetails = { vpa: upiForm.vpa };
+    }
+    if (method === 'netbanking') {
+      payload.netBankingDetails = { bank: netBankingForm.bank };
+    }
+    if (method === 'wallet') {
+      payload.walletDetails = { wallet: walletForm.wallet };
     }
     return payload;
   };
@@ -140,6 +148,9 @@ export default function PaymentPage() {
               <div className="mini-metric"><span>Payment ID</span><strong>{result.data.payment.paymentId}</strong></div>
               <div className="mini-metric"><span>Order ID</span><strong>{result.data.order?.orderId}</strong></div>
               <div className="mini-metric"><span>Method</span><strong>{result.data.payment.method}</strong></div>
+              {(result.data.payment.netBankingDetails?.bank || result.data.payment.walletDetails?.wallet) && (
+                <div className="mini-metric"><span>Provider</span><strong>{result.data.payment.netBankingDetails?.bank || result.data.payment.walletDetails?.wallet}</strong></div>
+              )}
               <div className="mini-metric"><span>Status</span><strong>{result.data.payment.status}</strong></div>
             </div>
           </div>
@@ -330,12 +341,40 @@ export default function PaymentPage() {
               </div>
             )}
 
-            {(method === 'netbanking' || method === 'wallet') && (
-              <div className="soft-card" style={{ marginBottom: 18 }}>
-                <div className="section-title" style={{ fontSize: '1rem' }}>Simulation Ready</div>
-                <div className="section-subtitle" style={{ marginTop: 8 }}>
-                  This method uses the existing backend simulator, so no extra customer input is required.
-                </div>
+            {method === 'netbanking' && (
+              <div className="form-group">
+                <label className="form-label">Select your bank</label>
+                <select
+                  className="form-select"
+                  value={netBankingForm.bank}
+                  onChange={(event) => setNetBankingForm({ bank: event.target.value })}
+                >
+                  <option value="">Choose a bank</option>
+                  <option value="SBI">State Bank of India</option>
+                  <option value="HDFC Bank">HDFC Bank</option>
+                  <option value="ICICI Bank">ICICI Bank</option>
+                  <option value="Axis Bank">Axis Bank</option>
+                  <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
+                </select>
+                <div className="inline-note">Bank selection is used by the simulated net banking flow.</div>
+              </div>
+            )}
+
+            {method === 'wallet' && (
+              <div className="form-group">
+                <label className="form-label">Select your wallet</label>
+                <select
+                  className="form-select"
+                  value={walletForm.wallet}
+                  onChange={(event) => setWalletForm({ wallet: event.target.value })}
+                >
+                  <option value="">Choose a wallet</option>
+                  <option value="Paytm">Paytm</option>
+                  <option value="PhonePe">PhonePe</option>
+                  <option value="Amazon Pay">Amazon Pay</option>
+                  <option value="MobiKwik">MobiKwik</option>
+                </select>
+                <div className="inline-note">Wallet selection is used by the simulated wallet flow.</div>
               </div>
             )}
 
