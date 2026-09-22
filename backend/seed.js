@@ -11,19 +11,26 @@ const seed = async () => {
   await User.deleteMany({});
   await Order.deleteMany({});
 
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  const userPassword = process.env.SEED_USER_PASSWORD;
+
+  if (!adminPassword || !userPassword) {
+    throw new Error('SEED_ADMIN_PASSWORD and SEED_USER_PASSWORD are required to run the seed script.');
+  }
+
   // Create admin user
   const admin = await User.create({
-    name: 'Admin User',
-    email: 'admin@paygateway.io',
-    password: 'Admin@1234',
+    name: process.env.SEED_ADMIN_NAME || 'Admin User',
+    email: process.env.SEED_ADMIN_EMAIL || 'admin@paygateway.io',
+    password: adminPassword,
     role: 'admin',
   });
 
   // Create regular user
   const user = await User.create({
-    name: 'John Doe',
-    email: 'user@paygateway.io',
-    password: 'User@1234',
+    name: process.env.SEED_USER_NAME || 'Demo User',
+    email: process.env.SEED_USER_EMAIL || 'user@paygateway.io',
+    password: userPassword,
     role: 'user',
   });
 
@@ -35,8 +42,9 @@ const seed = async () => {
   ]);
 
   console.log('✅ Seed data created:');
-  console.log('   Admin: admin@paygateway.io / Admin@1234');
-  console.log('   User:  user@paygateway.io / User@1234');
+  console.log(`   Admin: ${admin.email}`);
+  console.log(`   User:  ${user.email}`);
+  console.log('   Passwords are intentionally not printed.');
 
   await mongoose.disconnect();
   process.exit(0);
