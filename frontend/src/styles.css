@@ -1318,3 +1318,205 @@ tbody tr:hover {
 .chip-filter:hover { background: var(--bg-soft); }
 .chip-filter.active { background: var(--accent); color: white; border-color: var(--accent); }
 .toolbar-cluster { display: flex; gap: 8px; }
+
+
+/* Checkout / Payment Operations UI */
+.payment-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 5px;
+  background: #f1f5f9;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.payment-tab {
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: 500 0.88rem var(--font-sans);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.payment-tab:hover {
+  background: #ffffff;
+  color: var(--text-primary);
+}
+
+.payment-tab.active {
+  background: #ffffff;
+  color: var(--accent-strong);
+  border-color: #bfdbfe;
+  box-shadow: var(--shadow-sm);
+}
+
+.soft-card {
+  padding: 16px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.card-display {
+  position: relative;
+  min-height: 190px;
+  margin: 20px 0;
+  padding: 24px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #172554;
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
+}
+
+.card-display::after {
+  content: '';
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  right: -55px;
+  top: -65px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.card-chip {
+  width: 38px;
+  height: 28px;
+  border-radius: 6px;
+  background: #e2e8f0;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.16);
+}
+
+.card-number-display {
+  margin-top: 28px;
+  font: 500 1.25rem var(--font-mono);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 22px;
+}
+
+.card-label {
+  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.card-value {
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.trust-list {
+  display: grid;
+  gap: 10px;
+}
+
+.trust-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.tiny-dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 6px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.form-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.9fr;
+  gap: 12px;
+}
+
+.loading-inline {
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+}
+
+.processing-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.processing-card {
+  width: min(420px, 100%);
+  padding: 28px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-float);
+}
+
+.processing-title {
+  margin-top: 18px;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.processing-sub {
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 900px) {
+  .payment-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .form-row-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .payment-tabs {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .form-row-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .card-display {
+    padding: 20px;
+    min-height: 175px;
+  }
+
+  .card-number-display {
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+  }
+}
