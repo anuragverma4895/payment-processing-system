@@ -71,4 +71,12 @@ exports.createPaymentValidator = [
     .notEmpty()
     .matches(/^[\w.-]+@[\w.-]+$/)
     .withMessage('Valid UPI VPA required (e.g., user@upi)'),
+  body('netBankingDetails.bank')
+    .if(body('method').equals('netbanking'))
+    .isIn(['SBI', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Kotak Mahindra Bank'])
+    .withMessage('Select a supported bank'),
+  body('walletDetails.wallet')
+    .if(body('method').equals('wallet'))
+    .isIn(['Paytm', 'PhonePe', 'Amazon Pay', 'MobiKwik'])
+    .withMessage('Select a supported wallet'),
 ];
