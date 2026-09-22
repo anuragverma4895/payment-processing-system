@@ -944,7 +944,7 @@ tbody tr:hover {
 
 .feature-list {
   list-style: none;
-  margin-top: auto;
+  margin-top: 40px;
   display: grid;
   gap: 16px;
 }
@@ -1518,5 +1518,61 @@ tbody tr:hover {
   .card-number-display {
     font-size: 1rem;
     letter-spacing: 0.04em;
+  }
+}
+
+
+/* Auth layout refinement */
+.auth-container {
+  align-items: stretch;
+}
+
+.auth-left,
+.auth-right {
+  min-height: 0;
+}
+
+.auth-left {
+  justify-content: flex-start;
+}
+
+@media (min-width: 768px) {
+  .auth-container {
+    max-width: 1000px;
+  }
+
+  .auth-left {
+    padding: 40px 44px;
+  }
+
+  .auth-right {
+    padding: 40px 44px;
+  }
+
+  .auth-headline {
+    margin-top: 28px;
+    font-size: 2.05rem;
+  }
+
+  .auth-desc {
+    margin-bottom: 0;
+  }
+
+  .feature-list {
+    margin-top: 38px;
+  }
+}
+
+@media (max-width: 767px) {
+  .auth-left {
+    padding: 32px 28px 24px;
+  }
+
+  .auth-right {
+    padding: 32px 28px;
+  }
+
+  .feature-list {
+    margin-top: 28px;
   }
 }
