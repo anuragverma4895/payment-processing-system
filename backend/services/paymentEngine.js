@@ -97,7 +97,7 @@ exports.processUPIPayment = async ({ amount, currency, upiDetails, orderId }) =>
 
   await randomDelay();
 
-  const isSuccess = Math.random() < SUCCESS_RATE;
+  const isSuccess = FORCE_OUTCOME === 'success' || (FORCE_OUTCOME === 'auto' && Math.random() < SUCCESS_RATE);
   const upiTransactionId = `UPI${Date.now()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
   const duration = Date.now() - startTime;
 
