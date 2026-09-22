@@ -12,7 +12,7 @@ const logger = require('../config/logger');
 /**
  * Process a payment for an order
  */
-exports.processPayment = async ({ orderId, userId, method, cardDetails, upiDetails, idempotencyKey, req }) => {
+exports.processPayment = async ({ orderId, userId, method, cardDetails, upiDetails, netBankingDetails, walletDetails, idempotencyKey, req }) => {
   const startTime = Date.now();
 
   // Fetch and validate order
@@ -64,6 +64,14 @@ exports.processPayment = async ({ orderId, userId, method, cardDetails, upiDetai
     paymentData.upiDetails = { vpa: upiDetails.vpa };
   }
 
+  if (method === 'netbanking' && netBankingDetails) {
+    paymentData.netBankingDetails = { bank: netBankingDetails.bank };
+  }
+
+  if (method === 'wallet' && walletDetails) {
+    paymentData.walletDetails = { wallet: walletDetails.wallet };
+  }
+
   // Create payment record
   const payment = await Payment.create(paymentData);
 
@@ -104,12 +112,18 @@ exports.processPayment = async ({ orderId, userId, method, cardDetails, upiDetai
         upiDetails: upiDetails,
         orderId: order.orderId,
       });
-    } else {
-      // Generic mock for netbanking/wallet
-      engineResult = await paymentEngine.processCardPayment({
+    } else if (method === 'netbanking') {
+      engineResult = await paymentEngine.processNetBankingPayment({
         amount: order.amount,
         currency: order.currency,
-        cardDetails: {},
+        bank: netBankingDetails.bank,
+        orderId: order.orderId,
+      });
+    } else if (method === 'wallet') {
+      engineResult = await paymentEngine.processWalletPayment({
+        amount: order.amount,
+        currency: order.currency,
+        wallet: walletDetails.wallet,
         orderId: order.orderId,
       });
     }
@@ -188,7 +202,7 @@ exports.processPayment = async ({ orderId, userId, method, cardDetails, upiDetai
 /**
  * Retry a failed payment
  */
-exports.retryPayment = async ({ orderId, userId, method, cardDetails, upiDetails, idempotencyKey, req }) => {
+exports.retryPayment = async ({ orderId, userId, method, cardDetails, upiDetails, netBankingDetails, walletDetails, idempotencyKey, req }) => {
   const order = await Order.findOne({ orderId, userId });
   if (!order) throw new AppError('Order not found.', 404);
   if (order.status === 'paid') throw new AppError('Order is already paid.', 409);
@@ -208,5 +222,5 @@ exports.retryPayment = async ({ orderId, userId, method, cardDetails, upiDetails
     req,
   });
 
-  return exports.processPayment({ orderId, userId, method, cardDetails, upiDetails, idempotencyKey, req });
+  return exports.processPayment({ orderId, userId, method, cardDetails, upiDetails, netBankingDetails, walletDetails, idempotencyKey, req });
 };
