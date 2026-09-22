@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
 
+process.env.PAYMENT_FORCE_OUTCOME = 'success';
 process.env.PAYMENT_SUCCESS_RATE = '1';
 process.env.PAYMENT_MIN_DELAY_MS = '0';
 process.env.PAYMENT_MAX_DELAY_MS = '0';
