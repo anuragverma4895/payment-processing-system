@@ -1871,3 +1871,244 @@ table td {
     letter-spacing: 0.05em;
   }
 }
+
+
+/* =========================================================
+   Auth + responsive pass
+   Keep desktop auth screens inside one viewport and make
+   mobile layouts comfortable without horizontal overflow.
+   ========================================================= */
+
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.auth-page {
+  width: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+  padding: clamp(12px, 2.5vh, 24px);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-container {
+  width: min(1000px, 100%);
+  max-height: calc(100dvh - clamp(24px, 5vh, 48px));
+  min-height: 0;
+  overflow: hidden;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.04),
+    0 14px 32px rgba(0, 0, 0, 0.08) !important;
+}
+
+.auth-left,
+.auth-right {
+  min-width: 0;
+  min-height: 0;
+}
+
+.auth-left {
+  overflow: hidden;
+}
+
+.auth-right {
+  overflow: hidden;
+}
+
+.auth-shell {
+  min-width: 0;
+}
+
+.auth-form-sub {
+  line-height: 1.5;
+}
+
+.auth-card-note {
+  overflow-wrap: anywhere;
+}
+
+/* Tablet / mobile: compact two-part auth layout that fits common phone heights. */
+@media (max-width: 767px) {
+  .auth-page {
+    height: auto;
+    min-height: 100dvh;
+    padding: 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-items: flex-start;
+  }
+
+  .auth-container {
+    width: 100%;
+    max-height: none;
+    min-height: 0;
+    margin: auto 0;
+    display: block;
+    overflow: hidden;
+    border-radius: 14px;
+  }
+
+  .auth-left {
+    padding: 18px 18px 14px !important;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .auth-left .brand-badge {
+    gap: 9px;
+  }
+
+  .auth-left .logo-mark {
+    width: 34px;
+    height: 34px;
+    font-size: 0.95rem;
+  }
+
+  .auth-left .logo-name {
+    font-size: 0.95rem;
+  }
+
+  .auth-left .logo-sub {
+    font-size: 0.65rem;
+  }
+
+  .auth-headline {
+    margin: 14px 0 0 !important;
+    font-size: 1.25rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .auth-headline br {
+    display: none;
+  }
+
+  .auth-desc {
+    margin: 8px 0 0 !important;
+    font-size: 0.82rem !important;
+    line-height: 1.45 !important;
+  }
+
+  /* Feature bullets add height without helping the mobile login task. */
+  .auth-left .feature-list {
+    display: none;
+  }
+
+  .auth-right {
+    padding: 20px 18px 22px !important;
+  }
+
+  .auth-shell {
+    max-width: none;
+  }
+
+  .auth-form-title {
+    margin-top: 10px !important;
+    font-size: 1.25rem;
+  }
+
+  .auth-form-sub {
+    margin-bottom: 16px;
+    font-size: 0.84rem;
+  }
+
+  .auth-right .form-group {
+    margin-bottom: 14px;
+  }
+
+  .auth-right .form-label {
+    margin-bottom: 6px;
+    font-size: 0.84rem;
+  }
+
+  .auth-right .form-input {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+
+  .auth-right .btn-lg {
+    min-height: 46px;
+    padding: 10px 16px;
+  }
+
+  .auth-divider {
+    margin: 16px 0;
+  }
+
+  .auth-card-note {
+    margin-top: 14px !important;
+    padding: 12px;
+    font-size: 0.72rem;
+  }
+}
+
+/* Very small phones: keep the login action comfortably inside the viewport. */
+@media (max-width: 380px) {
+  .auth-page {
+    padding: 8px;
+  }
+
+  .auth-left {
+    padding: 14px 14px 10px !important;
+  }
+
+  .auth-right {
+    padding: 16px 14px 18px !important;
+  }
+
+  .auth-form-title {
+    font-size: 1.15rem;
+  }
+
+  .auth-form-sub {
+    font-size: 0.78rem;
+  }
+
+  .auth-right .form-group {
+    margin-bottom: 11px;
+  }
+
+  .auth-card-note {
+    display: none;
+  }
+}
+
+/* Prevent wide data grids/tables from breaking the mobile viewport. */
+.table-wrap,
+.stack-list,
+.card,
+.hero-card,
+.stat-card,
+.glass-panel,
+.soft-card {
+  min-width: 0;
+}
+
+table {
+  min-width: 680px;
+}
+
+.table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
+}
