@@ -11,16 +11,8 @@ const featurePoints = [
 ];
 
 const demoCredentials = [
-  {
-    label: 'Admin',
-    email: 'admin@paygateway.io',
-    password: 'Admin@1234',
-  },
-  {
-    label: 'User',
-    email: 'user@paygateway.io',
-    password: 'User@1234',
-  },
+  { label: 'Admin', email: 'admin@paygateway.io', password: 'Admin@1234' },
+  { label: 'User', email: 'user@paygateway.io', password: 'User@1234' },
 ];
 
 export default function LoginPage() {
@@ -30,15 +22,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    await submitLogin(form);
-  };
-
   const submitLogin = async (credentials) => {
     setError('');
     setLoading(true);
-
     try {
       await login(credentials);
       toast.success('Welcome back');
@@ -50,16 +36,14 @@ export default function LoginPage() {
     }
   };
 
-  const handleDemoLogin = async (credentials) => {
-    setForm({
-      email: credentials.email,
-      password: credentials.password,
-    });
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    await submitLogin(form);
+  };
 
-    await submitLogin({
-      email: credentials.email,
-      password: credentials.password,
-    });
+  const handleDemoLogin = async (credentials) => {
+    setForm({ email: credentials.email, password: credentials.password });
+    await submitLogin(credentials);
   };
 
   return (
@@ -134,81 +118,66 @@ export default function LoginPage() {
               Need an account? <Link to="/signup" className="auth-link">Create one</Link>
             </div>
 
-            <div
-              className="auth-card-note"
-              style={{
-                marginTop: 18,
-                padding: 16,
-              }}
-            >
-              <div className="section-title" style={{ fontSize: '1rem' }}>Demo Credentials</div>
-              <div
-                style={{
-                  display: 'grid',
-                  gap: 10,
-                  marginTop: 12,
-                }}
-              >
-                {demoCredentials.map((credential) => (
-                  <div
-                    key={credential.email}
+            <div className="auth-card-note" style={{ marginTop: 18, padding: 14 }}>
+              <div className="section-title" style={{ fontSize: '1rem', marginBottom: 10 }}>
+                Demo Credentials
+              </div>
+
+              {demoCredentials.map((credential) => (
+                <div
+                  key={credential.email}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    marginTop: 8,
+                    padding: '8px 10px',
+                    border: '1px solid var(--border)',
+                    borderRadius: 8,
+                    background: 'var(--bg-secondary)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <span
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 12,
-                      padding: '10px 12px',
-                      border: '1px solid var(--border)',
-                      borderRadius: 8,
-                      background: 'var(--bg-secondary)',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      color: 'var(--text-muted)',
+                      flexShrink: 0,
                     }}
                   >
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          color: 'var(--text-muted)',
-                          marginBottom: 4,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.04em',
-                        }}
-                      >
-                        {credential.label}
-                      </div>
-                      <div
-                        className="mono"
-                        style={{
-                          fontSize: '0.78rem',
-                          overflowWrap: 'anywhere',
-                        }}
-                      >
-                        {credential.email} / {credential.password}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => handleDemoLogin(credential)}
-                      disabled={loading}
-                      style={{ flexShrink: 0 }}
-                    >
-                      {loading ? '...' : 'Use'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div
-                style={{
-                  marginTop: 10,
-                  color: 'var(--text-muted)',
-                  fontSize: '0.75rem',
-                  textAlign: 'center',
-                }}
-              >
-                Click <strong>Use</strong> to fill the credentials and sign in automatically.
-              </div>
+                    {credential.label}:
+                  </span>
+                  <span
+                    className="mono"
+                    style={{
+                      fontSize: '0.72rem',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      minWidth: 0,
+                      flex: 1,
+                    }}
+                  >
+                    {credential.email} / {credential.password}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => handleDemoLogin(credential)}
+                    disabled={loading}
+                    style={{
+                      flexShrink: 0,
+                      padding: '5px 10px',
+                      fontSize: '0.75rem',
+                    }}
+                  >
+                    {loading ? '...' : 'Use'}
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
