@@ -10,6 +10,19 @@ const featurePoints = [
   ['AN', 'Clean dashboards for users and admins'],
 ];
 
+const demoCredentials = [
+  {
+    label: 'Admin',
+    email: 'admin@paygateway.io',
+    password: 'Admin@1234',
+  },
+  {
+    label: 'User',
+    email: 'user@paygateway.io',
+    password: 'User@1234',
+  },
+];
+
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -19,10 +32,15 @@ export default function LoginPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    await submitLogin(form);
+  };
+
+  const submitLogin = async (credentials) => {
     setError('');
     setLoading(true);
+
     try {
-      await login(form);
+      await login(credentials);
       toast.success('Welcome back');
       navigate('/dashboard');
     } catch (err) {
@@ -30,6 +48,18 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDemoLogin = async (credentials) => {
+    setForm({
+      email: credentials.email,
+      password: credentials.password,
+    });
+
+    await submitLogin({
+      email: credentials.email,
+      password: credentials.password,
+    });
   };
 
   return (
@@ -80,6 +110,7 @@ export default function LoginPage() {
                   required
                 />
               </div>
+
               <div className="form-group">
                 <label className="form-label">Password</label>
                 <input
@@ -103,12 +134,80 @@ export default function LoginPage() {
               Need an account? <Link to="/signup" className="auth-link">Create one</Link>
             </div>
 
-            <div className="auth-card-note" style={{ marginTop: 18 }}>
+            <div
+              className="auth-card-note"
+              style={{
+                marginTop: 18,
+                padding: 16,
+              }}
+            >
               <div className="section-title" style={{ fontSize: '1rem' }}>Demo Credentials</div>
-              <div className="section-subtitle" style={{ marginTop: 10 }}>
-                admin@paygateway.io / Admin@1234
-                <br />
-                user@paygateway.io / User@1234
+              <div
+                style={{
+                  display: 'grid',
+                  gap: 10,
+                  marginTop: 12,
+                }}
+              >
+                {demoCredentials.map((credential) => (
+                  <div
+                    key={credential.email}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      padding: '10px 12px',
+                      border: '1px solid var(--border)',
+                      borderRadius: 8,
+                      background: 'var(--bg-secondary)',
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          color: 'var(--text-muted)',
+                          marginBottom: 4,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                        }}
+                      >
+                        {credential.label}
+                      </div>
+                      <div
+                        className="mono"
+                        style={{
+                          fontSize: '0.78rem',
+                          overflowWrap: 'anywhere',
+                        }}
+                      >
+                        {credential.email} / {credential.password}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => handleDemoLogin(credential)}
+                      disabled={loading}
+                      style={{ flexShrink: 0 }}
+                    >
+                      {loading ? '...' : 'Use'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div
+                style={{
+                  marginTop: 10,
+                  color: 'var(--text-muted)',
+                  fontSize: '0.75rem',
+                  textAlign: 'center',
+                }}
+              >
+                Click <strong>Use</strong> to fill the credentials and sign in automatically.
               </div>
             </div>
           </div>
