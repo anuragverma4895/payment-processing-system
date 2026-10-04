@@ -2112,3 +2112,54 @@ select,
 textarea {
   max-width: 100%;
 }
+
+
+/* Final auth viewport fix: keep the complete login card visible on desktop. */
+@media (min-width: 768px) {
+  .auth-page {
+    min-height: 100dvh;
+    height: auto;
+    padding: 12px 24px;
+    overflow-y: auto;
+    align-items: center;
+  }
+
+  .auth-container {
+    width: min(1000px, 100%);
+    max-height: none;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .auth-left,
+  .auth-right {
+    padding: 32px 36px !important;
+  }
+
+  .auth-headline {
+    margin-top: 24px !important;
+    font-size: 2rem !important;
+  }
+
+  .feature-list {
+    margin-top: 28px !important;
+    gap: 12px !important;
+  }
+
+  .auth-form-sub {
+    margin-bottom: 18px !important;
+  }
+
+  .auth-right .form-group {
+    margin-bottom: 14px !important;
+  }
+
+  .auth-divider {
+    margin: 16px 0 !important;
+  }
+
+  .auth-card-note {
+    margin-top: 14px !important;
+    padding: 12px !important;
+  }
+}
